@@ -17,7 +17,7 @@
         const rawSnippets = [];
         const hostname = window.location.hostname;
 
-        if (hostname === 'www.luogu.com.cn') {
+        if (hostname === 'luogu.com.cn') {
             document.querySelectorAll('pre.lfe-code').forEach(element => {
                 rawSnippets.push(element.textContent);
             });
@@ -96,14 +96,43 @@
 
         // Set OJ field based on domain
         const ojInput = document.getElementById('ojInput');
-        if (window.location.hostname === 'www.luogu.com.cn') {
+        const problemNameInput = document.getElementById('problemNameInput'); // Get reference to problemNameInput
+
+        if (window.location.hostname === 'luogu.com.cn') {
             ojInput.value = 'Luogu';
+            const problemTitleElement = document.querySelector('h1.lfe-h1');
+            if (problemTitleElement) {
+                problemNameInput.value = problemTitleElement.textContent.trim();
+            }
         } else if (window.location.hostname === 'htoj.com.cn') {
             ojInput.value = 'Hetao';
+            const problemTitleElement = document.querySelector('h3.text-xl.font-bold.text-colorText');
+            if (problemTitleElement) {
+                // Clone the element to remove the divider before getting text content
+                const clonedTitle = problemTitleElement.cloneNode(true);
+                const dividerElement = clonedTitle.querySelector('div.ant-divider');
+                if (dividerElement) {
+                    dividerElement.remove();
+                }
+                problemNameInput.value = clonedTitle.textContent.trim();
+            }
         } else if (window.location.hostname === 'atcoder.jp') {
             ojInput.value = 'atcoder';
+            const problemTitleElement = document.querySelector('span.h2');
+            if (problemTitleElement) {
+                const clonedTitle = problemTitleElement.cloneNode(true);
+                const linkElement = clonedTitle.querySelector('a.btn');
+                if (linkElement) {
+                    linkElement.remove();
+                }
+                problemNameInput.value = clonedTitle.textContent.trim();
+            }
         } else if (window.location.hostname === 'codeforces.com') {
             ojInput.value = 'codeforces';
+            const problemTitleElement = document.querySelector('div.title');
+            if (problemTitleElement) {
+                problemNameInput.value = problemTitleElement.textContent.trim();
+            }
         }
 
         const panelHeader = document.getElementById('fetchProblemPanelHeader');
@@ -288,4 +317,5 @@
         createUI();
     }
 })();
+
 
