@@ -21,6 +21,7 @@
     const PANEL_ID = 'fetchProblemPanel';
     const TOGGLE_BTN_ID = 'fetchProblemToggleBtn';
     const TEMP_STATUS_ID = 'fetchProblemTempStatus';
+    const DRAG_THRESHOLD = 5; // Pixels to consider a drag, not a click
 
     const DOMAIN_CONFIG = {
         'luogu.com.cn': {
@@ -48,7 +49,7 @@
                 }
                 return '';
             },
-            
+
         },
         'atcoder.jp': {
             ojName: 'atcoder',
@@ -192,17 +193,22 @@
      */
     function makeDraggable(element, handle) {
         let isDragging = false;
+        let isMoved = false; // New flag to track if the element was dragged
         let currentX;
         let currentY;
         let initialX;
         let initialY;
         let xOffset = 0;
         let yOffset = 0;
+        let startX, startY; // To track initial mousedown position
 
         handle.addEventListener('mousedown', (e) => {
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
+            startX = e.clientX;
+            startY = e.clientY;
             isDragging = true;
+            isMoved = false; // Reset moved flag on mousedown
             if (element.id === TOGGLE_BTN_ID) {
                 element.style.cursor = 'grabbing';
             }
@@ -225,8 +231,16 @@
                 yOffset = currentY;
 
                 element.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+
+                // Check if the mouse has moved beyond the threshold
+                if (Math.abs(e.clientX - startX) > DRAG_THRESHOLD || Math.abs(e.clientY - startY) > DRAG_THRESHOLD) {
+                    isMoved = true;
+                }
             }
         });
+
+        // Return the isMoved state for click handlers to use
+        return { getIsMoved: () => isMoved };
     }
 
     // --- UI Functions ---
@@ -279,7 +293,8 @@
     function createToggleButtonUI() {
         const toggleBtn = document.createElement('button');
         toggleBtn.id = TOGGLE_BTN_ID;
-        toggleBtn.textContent = '抓取样例并发送到oicpp';
+        toggleBtn.textContent = '⬇️'; // Changed to icon
+        toggleBtn.title = '抓取样例并发送到oicpp'; // Added title for accessibility
         toggleBtn.style.cssText = `
             position: fixed;
             top: 10px;
@@ -287,10 +302,12 @@
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 10px; /* Adjusted padding for a more square look */
             border-radius: 4px;
             z-index: 10001;
             cursor: grab;
+            font-size: 18px; /* Increased font size for icon visibility */
+            line-height: 1; /* Ensure icon is vertically centered */
         `;
         document.body.appendChild(toggleBtn);
         return toggleBtn;
@@ -339,8 +356,23 @@
         if (!toggleBtn) {
             toggleBtn = createToggleButtonUI();
         }
-        makeDraggable(toggleBtn, toggleBtn);
-        toggleBtn.addEventListener('click', () => handleToggleButtonClick(config));
+        const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
+        toggleBtn.addEventListener('click', (e) => {
+            if (toggleBtnDraggable.getIsMoved()) {
+                e.preventDefault(); // Prevent click if it was a drag
+                return;
+            }
+            handleToggleButtonClick(config);
+        });
+
+        // If it's HTOJ, also create and manage the panel for manual input
+        if (config && hostname === 'htoj.com.cn') {
+            if (!panel) {
+                panel = createPanelUI();
+            }
+            panel.style.display = 'block'; // Show panel by default for Hetao
+            setupPanelEventListeners(panel, config);
+        }
     }
 
     /**
@@ -363,9 +395,13 @@
             return;
         }
 
-        makeDraggable(panel, panelHeader);
+        const panelDraggable = makeDraggable(panel, panelHeader);
 
         panelHeader.addEventListener('click', (e) => {
+            if (panelDraggable.getIsMoved()) {
+                e.preventDefault(); // Prevent click if it was a drag
+                return;
+            }
             if (e.target.id !== `${PANEL_ID}CloseBtn`) {
                 panelContent.style.display = panelContent.style.display === 'none' ? 'block' : 'none';
             }
