@@ -56,6 +56,12 @@
             codeSelectors: ['pre[id^="pre-sample"]'],
             problemNameSelector: 'span.h2',
             specialProblemNameExtraction: (element) => {
+                const pathname = window.location.pathname;
+                const tasksMatch = pathname.match(/\/tasks\/([^/]+)$/);
+                if (tasksMatch && tasksMatch[1]) {
+                    return tasksMatch[1];
+                }
+                // Fallback to existing logic if not a /tasks/ URL
                 const clonedTitle = element.cloneNode(true);
                 const linkElement = clonedTitle.querySelector('a.btn');
                 if (linkElement) {
@@ -71,7 +77,18 @@
                 const lines = Array.from(element.querySelectorAll('div.test-example-line')).map(line => line.textContent);
                 return lines.join('\n').trim();
             },
-            problemNameSelector: 'div.title'
+            problemNameSelector: 'div.title',
+            specialProblemNameExtraction: (element) => {
+                const pathname = window.location.pathname;
+                const problemMatch = pathname.match(/\/problemset\/problem\/(\d+)\/([A-Z])$/);
+                if (problemMatch && problemMatch[1] && problemMatch[2]) {
+                    const contestId = problemMatch[1];
+                    const problemLetter = problemMatch[2].toLowerCase();
+                    return `cf${contestId}_${problemLetter}`;
+                }
+                // Fallback to existing logic if not a /problemset/problem/ URL
+                return element.textContent.trim();
+            }
         }
     };
 
@@ -365,14 +382,7 @@
             handleToggleButtonClick(config);
         });
 
-        // If it's HTOJ, also create and manage the panel for manual input
-        if (config && hostname === 'htoj.com.cn') {
-            if (!panel) {
-                panel = createPanelUI();
-            }
-            panel.style.display = 'block'; // Show panel by default for Hetao
-            setupPanelEventListeners(panel, config);
-        }
+
     }
 
     /**
