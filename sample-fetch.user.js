@@ -475,10 +475,15 @@
             return; // Guide already shown
         }
 
-        // Create popover but don't attach listeners yet
-        createGuidePopover(); // Ensure popover exists for showGuideStep to find it
+        const shouldShowGuide = confirm('貌似你是第一次用这个脚本呢awa，要看看新手教程吗');
 
-        showGuideStep(0);
+        if (shouldShowGuide) {
+            // Create popover but don't attach listeners yet
+            createGuidePopover(); // Ensure popover exists for showGuideStep to find it
+            showGuideStep(0);
+        } else {
+            skipGuide(); // User chose not to see the guide
+        }
     }
 
     // --- UI Functions ---
@@ -821,5 +826,3 @@
     // --- Main Execution ---
     initializeUI();
 })();
-
-
