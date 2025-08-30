@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Fetch Code and Create Problem
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      1.0.0
 // @description  Extracts code snippets from the current page and sends them to a local API to create a new problem.
-// @author       Mr_Onion
+// @author       Mr_Onion & mywwzh
 // @match        https://luogu.com.cn/*
 // @match        https://www.luogu.com.cn/*
 // @match        https://htoj.com.cn/*
@@ -22,6 +22,15 @@
     const TOGGLE_BTN_ID = 'fetchProblemToggleBtn';
     const TEMP_STATUS_ID = 'fetchProblemTempStatus';
     const DRAG_THRESHOLD = 5; // Pixels to consider a drag, not a click
+    const COOLDOWN_DURATION_MS = 5000; // 5 seconds cooldown
+
+    // Guide Constants
+    const GUIDE_POPOVER_ID = 'fetchProblemGuidePopover';
+    const GUIDE_OVERLAY_ID = 'fetchProblemGuideOverlay';
+    const GUIDE_STORAGE_KEY = 'fetchProblemGuideShown';
+
+    let isCooldownActive = false; // Cooldown state variable
+    let cooldownIntervalId = null; // To store the countdown interval ID
 
     const DOMAIN_CONFIG = {
         'luogu.com.cn': {
@@ -91,6 +100,26 @@
             }
         }
     };
+
+    // --- Guide Steps ---
+    const guideSteps = [
+        {
+            selector: `#${TOGGLE_BTN_ID}`,
+            title: '重要：确认 OICPP 运行',
+            description: '本工具需要本地运行的 OICPP 服务。请确保您的 OICPP 已启动，否则功能将无法正常工作。'
+        },
+        {
+            selector: `#${TOGGLE_BTN_ID}`,
+            title: '可拖动的按钮',
+            description: '这个蓝色的下载按钮可以随意拖动到您喜欢的位置，方便操作。'
+        },
+        {
+            selector: `#${TOGGLE_BTN_ID}`,
+            title: '点击下载样例',
+            description: '点击此按钮，脚本将自动抓取当前页面的题目样例，并发送到 OICPP。请尝试点击它！'
+        }
+    ];
+    let currentGuideStep = 0;
 
     // --- Helper Functions ---
 
@@ -260,6 +289,198 @@
         return { getIsMoved: () => isMoved };
     }
 
+    // --- Guide Functions ---
+
+    /**
+     * Creates and appends the guide popover UI.
+     * @returns {HTMLElement} The created popover element.
+     */
+    function createGuidePopover() {
+        let popover = document.getElementById(GUIDE_POPOVER_ID);
+        if (!popover) {
+            popover = document.createElement('div');
+            popover.id = GUIDE_POPOVER_ID;
+            popover.style.cssText = `
+                position: absolute;
+                background-color: #fff;
+                border: 1px solid #007bff;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                padding: 15px;
+                max-width: 300px;
+                z-index: 2147483647; /* 确保在最顶层 */
+                pointer-events: auto; /* 确保可以点击 */
+                font-family: Arial, sans-serif;
+                font-size: 14px;
+                color: #343a40;
+                text-align: left;
+            `;
+            document.body.appendChild(popover);
+        }
+        popover.innerHTML = `
+            <h4 style="margin-top: 0; color: #007bff;"></h4>
+            <p style="margin-bottom: 15px;"></p>
+            <div style="display: flex; justify-content: space-between;">
+                <button id="guideSkipBtn" style="background-color: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">跳过</button>
+                <button id="guideNextBtn" style="background-color: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">下一步</button>
+            </div>
+        `;
+        return popover;
+    }
+
+    /**
+     * Creates and appends a highlight overlay.
+     * @returns {HTMLElement} The created overlay element.
+     */
+    function createHighlightOverlay() {
+        let overlay = document.getElementById(GUIDE_OVERLAY_ID);
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = GUIDE_OVERLAY_ID;
+            overlay.style.cssText = `
+                position: absolute;
+                background-color: rgba(0, 123, 255, 0.2); /* 半透明蓝色 */
+                border: 2px solid #007bff;
+                border-radius: 5px;
+                z-index: 99999;
+                pointer-events: none; /* 允许点击穿透 */
+                transition: all 0.3s ease-in-out;
+            `;
+            document.body.appendChild(overlay);
+        }
+        return overlay;
+    }
+
+    /**
+     * Positions the popover relative to the target element.
+     * @param {HTMLElement} popover - The guide popover element.
+     * @param {HTMLElement} targetElement - The element to position relative to.
+     */
+    function positionPopover(popover, targetElement) {
+        const targetRect = targetElement.getBoundingClientRect();
+        const popoverWidth = popover.offsetWidth;
+        const popoverHeight = popover.offsetHeight;
+
+        let top = targetRect.bottom + 10 + window.scrollY;
+        let left = targetRect.left + window.scrollX;
+
+        // Adjust if popover goes off screen to the right
+        if (left + popoverWidth > window.innerWidth) {
+            left = window.innerWidth - popoverWidth - 20; // 20px padding from right
+        }
+        // Adjust if popover goes off screen to the left
+        if (left < 0) {
+            left = 20; // 20px padding from left
+        }
+
+        // Adjust if popover goes off screen to the bottom
+        if (top + popoverHeight > window.innerHeight + window.scrollY) {
+            top = targetRect.top - popoverHeight - 10 + window.scrollY;
+            if (top < window.scrollY) { // If still off screen, position at top of viewport
+                top = window.scrollY + 20;
+            }
+        }
+
+        popover.style.top = `${top}px`;
+        popover.style.left = `${left}px`;
+    }
+
+    /**
+     * Shows a specific guide step.
+     * @param {number} stepIndex - The index of the step to show.
+     */
+    function showGuideStep(stepIndex) {
+        if (stepIndex >= guideSteps.length) {
+            skipGuide();
+            return;
+        }
+
+        currentGuideStep = stepIndex;
+        const step = guideSteps[currentGuideStep];
+        const targetElement = document.querySelector(step.selector);
+
+        if (!targetElement) {
+            console.warn(`Guide: Target element for step ${stepIndex} not found: ${step.selector}`);
+            nextGuideStep(); // Skip this step if element not found
+            return;
+        }
+
+        const popover = createGuidePopover();
+        const overlay = createHighlightOverlay();
+
+        // Update popover content
+        popover.querySelector('h4').textContent = step.title;
+        popover.querySelector('p').textContent = step.description;
+
+        // Highlight target element
+        const targetRect = targetElement.getBoundingClientRect();
+        overlay.style.width = `${targetRect.width}px`;
+        overlay.style.height = `${targetRect.height}px`;
+        overlay.style.top = `${targetRect.top + window.scrollY}px`;
+        overlay.style.left = `${targetRect.left + window.scrollX}px`;
+        overlay.style.display = 'block';
+
+        // Scroll to target element
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Position popover after scrolling
+        setTimeout(() => {
+            positionPopover(popover, targetElement);
+            popover.style.display = 'block';
+
+            // Attach event listeners AFTER popover is visible and positioned
+            const nextBtn = popover.querySelector('#guideNextBtn');
+            const skipBtn = popover.querySelector('#guideSkipBtn');
+
+            // Remove existing listeners to prevent duplicates
+            nextBtn.removeEventListener('click', nextGuideStep);
+            skipBtn.removeEventListener('click', skipGuide);
+
+            nextBtn.addEventListener('click', nextGuideStep);
+            skipBtn.addEventListener('click', skipGuide);
+
+            // Update button text
+            if (currentGuideStep === guideSteps.length - 1) {
+                nextBtn.textContent = '完成';
+            } else {
+                nextBtn.textContent = '下一步';
+            }
+        }, 300); // Give some time for scroll animation
+    }
+
+    /**
+     * Advances to the next guide step.
+     */
+    function nextGuideStep() {
+        currentGuideStep++;
+        showGuideStep(currentGuideStep);
+    }
+
+    /**
+     * Hides the guide and marks it as shown.
+     */
+    function skipGuide() {
+        const popover = document.getElementById(GUIDE_POPOVER_ID);
+        const overlay = document.getElementById(GUIDE_OVERLAY_ID);
+        if (popover) popover.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
+        localStorage.setItem(GUIDE_STORAGE_KEY, 'true');
+    }
+
+    /**
+     * Starts the interactive guide.
+     */
+    function startGuide() {
+        if (localStorage.getItem(GUIDE_STORAGE_KEY) === 'true') {
+            return; // Guide already shown
+        }
+
+        // Create popover but don't attach listeners yet
+        createGuidePopover(); // Ensure popover exists for showGuideStep to find it
+
+        showGuideStep(0);
+    }
+
     // --- UI Functions ---
 
     /**
@@ -310,7 +531,7 @@
     function createToggleButtonUI() {
         const toggleBtn = document.createElement('button');
         toggleBtn.id = TOGGLE_BTN_ID;
-        toggleBtn.textContent = '⬇️'; // Changed to icon
+        toggleBtn.innerHTML = '⬇️ <span id="cooldownCountdown" style="display:none; margin-left: 5px;"></span>'; // Added span for countdown
         toggleBtn.title = '抓取样例并发送到oicpp'; // Added title for accessibility
         toggleBtn.style.cssText = `
             position: fixed;
@@ -325,6 +546,9 @@
             cursor: grab;
             font-size: 18px; /* Increased font size for icon visibility */
             line-height: 1; /* Ensure icon is vertically centered */
+            display: flex; /* Use flex to align icon and countdown */
+            align-items: center;
+            justify-content: center;
         `;
         document.body.appendChild(toggleBtn);
         return toggleBtn;
@@ -346,7 +570,7 @@
                 background-color: #f8f9fa;
                 border: 1px solid #dee2e6;
                 padding: 8px 12px;
-                border-radius: 4px;
+                border-radius: 44px;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                 z-index: 10002;
                 font-family: Arial, sans-serif;
@@ -382,7 +606,10 @@
             handleToggleButtonClick(config);
         });
 
-
+        // Start guide if not shown before
+        if (localStorage.getItem(GUIDE_STORAGE_KEY) !== 'true') {
+            startGuide();
+        }
     }
 
     /**
@@ -460,7 +687,7 @@
     /**
      * Handles the logic for creating a problem when the button is clicked.
      * This is used for the full panel UI.
-     * @param {HTMLInputElement} ojInput - The OJ input element.
+     * @param {HTMLInputElement} ojInput - The OJ input element.d
      * @param {HTMLInputElement} problemNameInput - The problem name input element.
      * @param {HTMLElement} statusMessage - The status message element.
      * @param {HTMLElement} panel - The panel element.
@@ -507,7 +734,40 @@
      * @param {Object} config - The domain configuration.
      */
     async function handleToggleButtonClick(config) {
+        const toggleBtn = document.getElementById(TOGGLE_BTN_ID);
+        const cooldownCountdownSpan = toggleBtn.querySelector('#cooldownCountdown');
         const statusMessage = createTemporaryStatusMessage();
+
+        if (isCooldownActive) {
+            statusMessage.style.color = 'orange';
+            statusMessage.textContent = `请稍候，${Math.ceil(COOLDOWN_DURATION_MS / 1000)}秒后可再次发送。`;
+            statusMessage.style.display = 'block';
+            setTimeout(() => { statusMessage.style.display = 'none'; }, 3000); // Hide cooldown message after 3s
+            return;
+        }
+
+        isCooldownActive = true;
+        toggleBtn.disabled = true;
+        toggleBtn.style.cursor = 'not-allowed';
+        cooldownCountdownSpan.style.display = 'inline';
+
+        let timeLeft = COOLDOWN_DURATION_MS;
+        cooldownIntervalId = setInterval(() => {
+            timeLeft -= 1000;
+            if (timeLeft <= 0) {
+                clearInterval(cooldownIntervalId);
+                isCooldownActive = false;
+                toggleBtn.disabled = false;
+                toggleBtn.style.cursor = 'grab';
+                cooldownCountdownSpan.style.display = 'none';
+                cooldownCountdownSpan.textContent = '';
+                statusMessage.style.display = 'none'; // Clear any lingering status
+            } else {
+                cooldownCountdownSpan.textContent = `(${Math.ceil(timeLeft / 1000)}s)`;
+            }
+        }, 1000);
+
+
         statusMessage.style.display = 'block';
 
         const oj = config ? config.ojName : '';
@@ -517,6 +777,13 @@
             statusMessage.style.color = 'red';
             statusMessage.textContent = 'OJ 或 题目名称无法自动获取，请手动操作或刷新页面。';
             alert('OJ 或 题目名称无法自动获取，请手动操作或刷新页面。');
+            // Reset cooldown if there's an immediate error
+            clearInterval(cooldownIntervalId);
+            isCooldownActive = false;
+            toggleBtn.disabled = false;
+            toggleBtn.style.cursor = 'grab';
+            cooldownCountdownSpan.style.display = 'none';
+            cooldownCountdownSpan.textContent = '';
             return;
         }
 
@@ -526,6 +793,13 @@
             statusMessage.style.color = 'red';
             statusMessage.textContent = '未找到任何 <code> 标签可提取。';
             alert('未找到任何 <code> 标签可提取。');
+            // Reset cooldown if there's an immediate error
+            clearInterval(cooldownIntervalId);
+            isCooldownActive = false;
+            toggleBtn.disabled = false;
+            toggleBtn.style.cursor = 'grab';
+            cooldownCountdownSpan.style.display = 'none';
+            cooldownCountdownSpan.textContent = '';
             return;
         }
 
