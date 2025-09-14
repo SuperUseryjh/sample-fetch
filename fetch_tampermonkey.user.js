@@ -11,6 +11,7 @@
 // @match        https://codeforces.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      http://127.0.0.1:20030
+// @connect      127.0.0.1
 // ==/UserScript==
 
 (function() {
