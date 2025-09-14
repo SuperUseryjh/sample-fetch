@@ -602,8 +602,6 @@
             statusDiv.id = TEMP_STATUS_ID;
             statusDiv.style.cssText = `
                 position: fixed;
-                top: 50px;
-                right: 10px;
                 background-color: #f8f9fa;
                 border: 1px solid #dee2e6;
                 padding: 8px 12px;
@@ -823,6 +821,11 @@
         const toggleBtn = document.getElementById(TOGGLE_BTN_ID);
         const cooldownCountdownSpan = toggleBtn.querySelector('#cooldownCountdown');
         const statusMessage = createTemporaryStatusMessage();
+
+        // 定位状态消息到按钮下方
+        const toggleBtnRect = toggleBtn.getBoundingClientRect();
+        statusMessage.style.top = `${toggleBtnRect.bottom + 10}px`; // 按钮下方10px
+        statusMessage.style.left = `${toggleBtnRect.left}px`; // 与按钮左侧对齐
 
         if (isCooldownActive) {
             console.log('OICPP sampleTester: handleToggleButtonClick - 冷却中，阻止新请求。');
