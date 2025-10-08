@@ -1,12 +1,12 @@
+
 // ==UserScript==
 // @name         OICPP sampleTester
 // @namespace    https://oicpp.mywwzh.top/
-// @version      1.0.1
+// @version      1.0.2
 // @description  从 OJ 平台获取题目样例并发送到 OICPP
 // @author       Mr_Onion & mywwzh
-// @match        https://luogu.com.cn/*
-// @match        https://www.luogu.com.cn/*
-// @match        https://htoj.com.cn/*
+// @match        https://www.luogu.com.cn/problem/*
+// @match        https://htoj.com.cn/cpp/oj/problem/detail/*
 // @match        https://atcoder.jp/*
 // @match        https://codeforces.com/*
 // @grant        GM_xmlhttpRequest
@@ -16,7 +16,7 @@
 
 (function() {
     'use strict';
-    console.log('OICPP sampleTester: Tampermonkey script loaded.');
+    console.log('OICPP SampleTester: 油猴脚本已加载。');
 
     // --- 常量 ---
     const API_URL = "http://127.0.0.1:20030/createNewProblem";
@@ -40,12 +40,88 @@
         'luogu.com.cn': {
             ojName: 'Luogu',
             codeSelectors: ['pre.lfe-code'],
-            problemNameSelector: 'h1.lfe-h1'
+            problemNameSelector: 'h1.lfe-h1',
+            extractLuoguLimits: () => {
+                let timeLimit = 1000; // Default
+                let memoryLimit = 512; // Default
+
+                const fields = document.querySelectorAll('div.stat.stacked.with-vr.color-inv > div.field');
+                fields.forEach(field => {
+                    const nameElement = field.querySelector('span.stat-text.name');
+                    const valueElement = field.querySelector('span.stat-text.value');
+
+                    if (nameElement && valueElement) {
+                        const name = nameElement.textContent.trim();
+                        const value = valueElement.textContent.trim();
+
+                        if (name === '时间限制') {
+                            const match = value.match(/(\d+\.?\d*)\s*(s|ms)/i);
+                            if (match) {
+                                const num = parseFloat(match[1]);
+                                if (match[2].toLowerCase() === 's') {
+                                    timeLimit = num * 1000;
+                                } else {
+                                    timeLimit = num;
+                                }
+                            }
+                        } else if (name === '内存限制') {
+                            const match = value.match(/(\d+\.?\d*)\s*(mb|gb)/i);
+                            if (match) {
+                                const num = parseFloat(match[1]);
+                                if (match[2].toLowerCase() === 'gb') {
+                                    memoryLimit = num * 1024;
+                                } else {
+                                    memoryLimit = num;
+                                }
+                            }
+                        }
+                    }
+                });
+                return { timeLimit, memoryLimit };
+            }
         },
         'www.luogu.com.cn': {
             ojName: 'Luogu',
             codeSelectors: ['pre.lfe-code'],
-            problemNameSelector: 'h1.lfe-h1'
+            problemNameSelector: 'h1.lfe-h1',
+            extractLuoguLimits: () => {
+                let timeLimit = 1000; // Default
+                let memoryLimit = 512; // Default
+
+                const fields = document.querySelectorAll('div.stat.stacked.with-vr.color-inv > div.field');
+                fields.forEach(field => {
+                    const nameElement = field.querySelector('span.stat-text.name');
+                    const valueElement = field.querySelector('span.stat-text.value');
+
+                    if (nameElement && valueElement) {
+                        const name = nameElement.textContent.trim();
+                        const value = valueElement.textContent.trim();
+
+                        if (name === '时间限制') {
+                            const match = value.match(/(\d+\.?\d*)\s*(s|ms)/i);
+                            if (match) {
+                                const num = parseFloat(match[1]);
+                                if (match[2].toLowerCase() === 's') {
+                                    timeLimit = num * 1000;
+                                } else {
+                                    timeLimit = num;
+                                }
+                            }
+                        } else if (name === '内存限制') {
+                            const match = value.match(/(\d+\.?\d*)\s*(mb|gb)/i);
+                            if (match) {
+                                const num = parseFloat(match[1]);
+                                if (match[2].toLowerCase() === 'gb') {
+                                    memoryLimit = num * 1024;
+                                } else {
+                                    memoryLimit = num;
+                                }
+                            }
+                        }
+                    }
+                });
+                return { timeLimit, memoryLimit };
+            }
         },
         'htoj.com.cn': {
             ojName: 'Hetao',
@@ -61,6 +137,15 @@
                     return titleSpans[0].textContent.trim();
                 }
                 return '';
+            },
+            timeLimitSelector: 'div.mt-3.inline-flex > div:nth-child(1) > div.mx-3 > div:nth-child(2)',
+            memoryLimitSelector: 'div.mt-3.inline-flex > div:nth-child(2) > div.mx-3 > div:nth-child(2)',
+            extractTimeAndMemoryLimits: () => {
+                const timeLimitElement = document.querySelector(DOMAIN_CONFIG['htoj.com.cn'].timeLimitSelector);
+                const memoryLimitElement = document.querySelector(DOMAIN_CONFIG['htoj.com.cn'].memoryLimitSelector);
+                const timeLimit = timeLimitElement ? parseInt(timeLimitElement.textContent.trim()) : 1000; // 默认 1000ms
+                const memoryLimit = memoryLimitElement ? parseInt(memoryLimitElement.textContent.trim()) : 512; // 默认 512MB
+                return { timeLimit, memoryLimit };
             },
 
         },
@@ -81,6 +166,35 @@
                     linkElement.remove();
                 }
                 return clonedTitle.textContent.trim();
+            },
+            extractAtcoderLimits: () => {
+                let timeLimit = 2000; // Default to 2 seconds (2000ms)
+                let memoryLimit = 1024; // Default to 1024 MiB
+
+                const pElement = document.querySelector('p'); // Assuming the limits are in a <p> tag
+                if (pElement) {
+                    const text = pElement.textContent;
+                    const timeMatch = text.match(/Time Limit:\s*(\d+\.?\d*)\s*(sec|ms)/i);
+                    if (timeMatch) {
+                        const num = parseFloat(timeMatch[1]);
+                        if (timeMatch[2].toLowerCase() === 'sec') {
+                            timeLimit = num * 1000;
+                        } else {
+                            timeLimit = num;
+                        }
+                    }
+
+                    const memoryMatch = text.match(/Memory Limit:\s*(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                    if (memoryMatch) {
+                        const num = parseFloat(memoryMatch[1]);
+                        if (memoryMatch[2].toLowerCase() === 'gb') {
+                            memoryLimit = num * 1024;
+                        } else {
+                            memoryLimit = num;
+                        }
+                    }
+                }
+                return { timeLimit, memoryLimit };
             }
         },
         'codeforces.com': {
@@ -101,6 +215,39 @@
                 }
                 // Fallback to existing logic if not a /problemset/problem/ URL
                 return element.textContent.trim();
+            },
+            extractCodeforcesLimits: () => {
+                let timeLimit = 2000; // 默认 2 秒 (2000ms)
+                let memoryLimit = 256; // 默认 256 MB
+
+                const timeLimitElement = document.querySelector('div.time-limit');
+                if (timeLimitElement) {
+                    const text = timeLimitElement.textContent;
+                    const match = text.match(/(\d+\.?\d*)\s*(seconds|second|sec|ms)/i);
+                    if (match) {
+                        const num = parseFloat(match[1]);
+                        if (match[2].toLowerCase().startsWith('sec')) {
+                            timeLimit = num * 1000;
+                        } else {
+                            timeLimit = num;
+                        }
+                    }
+                }
+
+                const memoryLimitElement = document.querySelector('div.memory-limit');
+                if (memoryLimitElement) {
+                    const text = memoryLimitElement.textContent;
+                    const match = text.match(/(\d+\.?\d*)\s*(megabytes|megabyte|mb|gb)/i);
+                    if (match) {
+                        const num = parseFloat(match[1]);
+                        if (match[2].toLowerCase().startsWith('gb')) {
+                            memoryLimit = num * 1024;
+                        } else {
+                            memoryLimit = num;
+                        }
+                    }
+                }
+                return { timeLimit, memoryLimit };
             }
         }
     };
@@ -132,19 +279,19 @@
      * @returns {Array<Object>} 包含成对样例对象的数组。
      */
     function extractCodeSnippets() {
-        console.log('OICPP sampleTester: extractCodeSnippets - 开始提取代码片段。');
+        console.log('OICPP SampleTester: extractCodeSnippets - 开始提取代码片段。');
         const rawSnippets = [];
         const hostname = window.location.hostname;
         const config = DOMAIN_CONFIG[hostname];
 
         if (!config) {
-            console.log('OICPP sampleTester: extractCodeSnippets - 域名无特定配置，使用默认选择器。');
+            console.log('OICPP SampleTester: extractCodeSnippets - 域名无特定配置，使用默认选择器。');
             // 如果没有特定配置，则为其他域名使用默认回退
             document.querySelectorAll('pre.syntax-hl code').forEach(element => {
                 rawSnippets.push(element.textContent);
             });
         } else {
-            console.log('OICPP sampleTester: extractCodeSnippets - 使用域名特定配置:', config);
+            console.log('OICPP SampleTester: extractCodeSnippets - 使用域名特定配置:', config);
             config.codeSelectors.forEach(selector => {
                 document.querySelectorAll(selector).forEach(element => {
                     if (config.codeforcesLineExtractor && (hostname === 'codeforces.com')) {
@@ -155,9 +302,34 @@
                 });
             });
         }
-        console.log('OICPP sampleTester: extractCodeSnippets - 找到的原始片段:', rawSnippets);
+        console.log('OICPP SampleTester: extractCodeSnippets - 找到的原始片段:', rawSnippets);
 
         const pairedSamples = [];
+        let defaultTimeLimit = 1000; // 默认时间限制
+        let defaultMemoryLimit = 512; // 默认内存限制
+
+        if (hostname === 'htoj.com.cn' && config.extractTimeAndMemoryLimits) {
+            const limits = config.extractTimeAndMemoryLimits();
+            defaultTimeLimit = limits.timeLimit;
+            defaultMemoryLimit = limits.memoryLimit;
+            console.log('OICPP SampleTester: extractCodeSnippets - 提取到时间限制:', defaultTimeLimit, '内存限制:', defaultMemoryLimit);
+        } else if ((hostname === 'luogu.com.cn' || hostname === 'www.luogu.com.cn') && config.extractLuoguLimits) {
+            const limits = config.extractLuoguLimits();
+            defaultTimeLimit = limits.timeLimit;
+            defaultMemoryLimit = limits.memoryLimit;
+            console.log('OICPP SampleTester: extractCodeSnippets - 提取到时间限制:', defaultTimeLimit, '内存限制:', defaultMemoryLimit);
+        } else if (hostname === 'atcoder.jp' && config.extractAtcoderLimits) {
+            const limits = config.extractAtcoderLimits();
+            defaultTimeLimit = limits.timeLimit;
+            defaultMemoryLimit = limits.memoryLimit;
+            console.log('OICPP SampleTester: extractCodeSnippets - 提取到时间限制:', defaultTimeLimit, '内存限制:', defaultMemoryLimit);
+        } else if (hostname === 'codeforces.com' && config.extractCodeforcesLimits) {
+            const limits = config.extractCodeforcesLimits();
+            defaultTimeLimit = limits.timeLimit;
+            defaultMemoryLimit = limits.memoryLimit;
+            console.log('OICPP SampleTester: extractCodeSnippets - 提取到时间限制:', defaultTimeLimit, '内存限制:', defaultMemoryLimit);
+        }
+
         for (let i = 0; i < rawSnippets.length; i += 2) {
             const inputContent = rawSnippets[i];
             const outputContent = rawSnippets[i + 1] || ""; // 处理奇数个片段
@@ -166,10 +338,11 @@
                 id: (i / 2) + 1, // 每对的ID
                 input: inputContent,
                 output: outputContent,
-                timeLimit: 1000 // 默认时间限制
+                timeLimit: defaultTimeLimit, // 使用提取到的时间限制
+                memoryLimit: defaultMemoryLimit // 使用提取到的内存限制
             });
         }
-        console.log('OICPP sampleTester: extractCodeSnippets - 成对样例:', pairedSamples);
+        console.log('OICPP SampleTester: extractCodeSnippets - 成对样例:', pairedSamples);
         return pairedSamples;
     }
 
@@ -178,12 +351,12 @@
      * @returns {string} 提取的题目名称。
      */
     function getProblemName() {
-        console.log('OICPP sampleTester: getProblemName - 开始提取题目名称。');
+        console.log('OICPP SampleTester: getProblemName - 开始提取题目名称。');
         const hostname = window.location.hostname;
         const config = DOMAIN_CONFIG[hostname];
 
         if (!config || !config.problemNameSelector) {
-            console.log('OICPP sampleTester: getProblemName - 未找到配置或题目名称选择器。');
+            console.log('OICPP SampleTester: getProblemName - 未找到配置或题目名称选择器。');
             return '';
         }
 
@@ -192,14 +365,14 @@
             let problemName;
             if (config.specialProblemNameExtraction) {
                 problemName = config.specialProblemNameExtraction(problemTitleElement);
-                console.log('OICPP sampleTester: getProblemName - 使用特殊提取方法。名称:', problemName);
+                console.log('OICPP SampleTester: getProblemName - 使用特殊提取方法。名称:', problemName);
             } else {
                 problemName = problemTitleElement.textContent.trim();
-                console.log('OICPP sampleTester: getProblemName - 使用默认提取方法。名称:', problemName);
+                console.log('OICPP SampleTester: getProblemName - 使用默认提取方法。名称:', problemName);
             }
             return problemName;
         }
-        console.log('OICPP sampleTester: getProblemName - 未找到题目标题元素。');
+        console.log('OICPP SampleTester: getProblemName - 未找到题目标题元素。');
         return '';
     }
 
@@ -209,7 +382,7 @@
      * @param {HTMLElement} statusMessageElement - 用于更新状态消息的元素。
      */
     function sendProblemToAPI(payload, statusMessageElement) {
-        console.log('OICPP sampleTester: sendProblemToAPI - 正在向API发送数据:', payload);
+        console.log('OICPP SampleTester: sendProblemToAPI - 正在向API发送数据:', payload);
         statusMessageElement.style.color = 'blue';
         statusMessageElement.textContent = '正在提取代码并发送请求...';
 
@@ -221,13 +394,13 @@
             },
             data: JSON.stringify(payload),
             onload: function(response) {
-                console.log('OICPP sampleTester: sendProblemToAPI - 收到API响应。状态:', response.status, '响应文本:', response.responseText);
+                console.log('OICPP SampleTester: sendProblemToAPI - 收到API响应。状态:', response.status, '响应文本:', response.responseText);
                 try {
                     const data = JSON.parse(response.responseText);
                     if (response.status === 200) {
                         statusMessageElement.style.color = 'green';
                         statusMessageElement.textContent = `成功: ${data.message}`;
-                        console.log('OICPP sampleTester: sendProblemToAPI - 成功:', data.message);
+                        console.log('OICPP SampleTester: sendProblemToAPI - 成功:', data.message);
                     } else {
                         let errorMessage = `错误 (${response.status}): ${data.message || '未知错误'}`;
                         if (data.invalidField) {
@@ -236,20 +409,20 @@
                         alert(errorMessage);
                         statusMessageElement.style.color = 'red';
                         statusMessageElement.textContent = errorMessage;
-                        console.error('OICPP sampleTester: sendProblemToAPI - API错误:', errorMessage, '数据:', data);
+                        console.error('OICPP SampleTester: sendProblemToAPI - API错误:', errorMessage, '数据:', data);
                     }
                 } catch (e) {
                     alert(`请求成功，但解析响应失败: ${e.message}`);
                     statusMessageElement.style.color = 'red';
                     statusMessageElement.textContent = `请求成功，但解析响应失败: ${e.message}`;
-                    console.error('OICPP sampleTester: sendProblemToAPI - JSON解析错误:', e.message, '响应文本:', response.responseText);
+                    console.error('OICPP SampleTester: sendProblemToAPI - JSON解析错误:', e.message, '响应文本:', response.responseText);
                 }
             },
             onerror: function(error) {
                 alert(`请求失败: ${error.statusText || error.responseText || '网络错误'}。请确认OICPP是否正在运行。`);
                 statusMessageElement.style.color = 'red';
                 statusMessageElement.textContent = `请求失败: ${error.statusText || error.responseText || '网络错误'}。请确认OICPP是否正在运行。`;
-                console.error('OICPP sampleTester: GM_xmlhttpRequest 错误:', error);
+                console.error('OICPP SampleTester: GM_xmlhttpRequest 错误:', error);
             }
         });
     }
@@ -293,7 +466,7 @@
                     const finalTop = parseFloat(element.style.top);
                     localStorage.setItem(LOCAL_STORAGE_POS_X, finalRight);
                     localStorage.setItem(LOCAL_STORAGE_POS_Y, finalTop);
-                    console.log(`OICPP sampleTester: Button position saved: right=${finalRight}, top=${finalTop}`);
+                    console.log(`OICPP SampleTester: 按钮位置已保存: right=${finalRight}, top=${finalTop}`);
                 }
             }
         });
@@ -623,17 +796,17 @@
      * 初始化UI和事件监听器。
      */
     function initializeUI() {
-        console.log('OICPP sampleTester: initializeUI - 正在初始化UI。');
+        console.log('OICPP SampleTester: initializeUI - 正在初始化UI。');
         const hostname = window.location.hostname;
         const config = DOMAIN_CONFIG[hostname];
-        console.log('OICPP sampleTester: initializeUI - 当前主机名:', hostname, '配置:', config);
+        console.log('OICPP SampleTester: initializeUI - 当前主机名:', hostname, '配置:', config);
 
         let panel = document.getElementById(PANEL_ID);
         let toggleBtn = document.getElementById(TOGGLE_BTN_ID);
 
         // 对于所有域名，创建并管理切换按钮
         if (!toggleBtn) {
-            console.log('OICPP sampleTester: initializeUI - 未找到切换按钮，正在创建。');
+            console.log('OICPP SampleTester: initializeUI - 未找到切换按钮，正在创建。');
             toggleBtn = createToggleButtonUI();
 
             // 尝试从 localStorage 加载位置
@@ -645,19 +818,19 @@
                 const top = parseFloat(savedTop);
                 toggleBtn.style.right = `${right}px`;
                 toggleBtn.style.top = `${top}px`;
-                console.log(`OICPP sampleTester: Loaded button position: right=${right}, top=${top}`);
+                console.log(`OICPP SampleTester: 已加载按钮位置: right=${right}, top=${top}`);
             } else {
                 // 如果没有保存的位置，则设置默认位置
                 toggleBtn.style.right = '10px';
                 toggleBtn.style.top = '10px';
-                console.log('OICPP sampleTester: Set default button position.');
+                console.log('OICPP SampleTester: 已设置默认按钮位置。');
             }
         }
         const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
         toggleBtn.addEventListener('click', (e) => {
             if (toggleBtnDraggable.getIsMoved()) {
                 e.preventDefault(); // 如果是拖动，则阻止点击
-                console.log('OICPP sampleTester: initializeUI - 切换按钮被拖动，阻止点击事件。');
+                console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件。');
                 return;
             }
             handleToggleButtonClick(config);
@@ -665,10 +838,10 @@
 
         // 如果之前未显示过指引，则启动指引
         if (localStorage.getItem(GUIDE_STORAGE_KEY) !== 'true') {
-            console.log('OICPP sampleTester: initializeUI - 指引未显示过，正在启动指引。');
+            console.log('OICPP SampleTester: initializeUI - 指引未显示过，正在启动指引。');
             startGuide();
         } else {
-            console.log('OICPP sampleTester: initializeUI - 指引已显示。');
+            console.log('OICPP SampleTester: initializeUI - 指引已显示。');
         }
 
         // 添加窗口大小调整事件监听器
@@ -682,12 +855,12 @@
                 const top = parseFloat(savedTop);
                 toggleBtn.style.right = `${right}px`;
                 toggleBtn.style.top = `${top}px`;
-                console.log(`OICPP sampleTester: Resized, re-applied button position: right=${right}, top=${top}`);
+                console.log(`OICPP SampleTester: 窗口大小调整，重新应用按钮位置: right=${right}, top=${top}`);
             } else if (toggleBtn) {
                 // 如果没有保存的位置，则在调整大小时应用默认位置
                 toggleBtn.style.right = '10px';
                 toggleBtn.style.top = '10px';
-                console.log('OICPP sampleTester: Resized, set default button position.');
+                console.log('OICPP SampleTester: 窗口大小调整，设置默认按钮位置。');
             }
         });
     }
@@ -776,7 +949,7 @@
         const oj = ojInput.value;
         let problemName = problemNameInput.value;
         if (problemName.length > 32) {
-            console.warn('OICPP sampleTester: handleCreateProblem - 题目名称过长，已截断至32字符。');
+            console.warn('OICPP SampleTester: handleCreateProblem - 题目名称过长，已截断至32字符。');
             problemName = problemName.substring(0, 32);
         }
 
@@ -818,7 +991,7 @@
      * @param {Object} config - 域名配置。
      */
     async function handleToggleButtonClick(config) {
-        console.log('OICPP sampleTester: handleToggleButtonClick - 切换按钮被点击。冷却状态:', isCooldownActive);
+        console.log('OICPP SampleTester: handleToggleButtonClick - 切换按钮被点击。冷却状态:', isCooldownActive);
         const toggleBtn = document.getElementById(TOGGLE_BTN_ID);
         const cooldownCountdownSpan = toggleBtn.querySelector('#cooldownCountdown');
         const statusMessage = createTemporaryStatusMessage();
@@ -829,7 +1002,7 @@
         statusMessage.style.left = `${toggleBtnRect.left}px`; // 与按钮左侧对齐
 
         if (isCooldownActive) {
-            console.log('OICPP sampleTester: handleToggleButtonClick - 冷却中，阻止新请求。');
+            console.log('OICPP SampleTester: handleToggleButtonClick - 冷却中，阻止新请求。');
             statusMessage.style.color = 'orange';
             statusMessage.textContent = `请稍候，${Math.ceil(COOLDOWN_DURATION_MS / 1000)}秒后可再次发送。`;
             statusMessage.style.display = 'block';
@@ -852,7 +1025,7 @@
                 toggleBtn.style.cursor = 'grab';
                 cooldownCountdownSpan.style.display = 'none';
                 cooldownCountdownSpan.textContent = '';
-                statusMessage.style.display = 'none'; // Clear any lingering status
+                statusMessage.style.display = 'none'; // 清除任何残留状态
             } else {
                 cooldownCountdownSpan.textContent = `(${Math.ceil(timeLeft / 1000)}s)`;
             }
@@ -864,7 +1037,7 @@
         const oj = config ? config.ojName : '';
         let problemName = getProblemName();
         if (problemName.length > 32) {
-            console.warn('OICPP sampleTester: handleToggleButtonClick - 题目名称过长，已截断至32字符。');
+            console.warn('OICPP SampleTester: handleToggleButtonClick - 题目名称过长，已截断至32字符。');
             problemName = problemName.substring(0, 32);
         }
 
@@ -872,7 +1045,7 @@
             statusMessage.style.color = 'red';
             statusMessage.textContent = 'OJ 或 题目名称无法自动获取，请手动操作或刷新页面。';
             alert('OJ 或 题目名称无法自动获取，请手动操作或刷新页面。');
-            // Reset cooldown if there's an immediate error
+            // 如果立即出错，重置冷却
             clearInterval(cooldownIntervalId);
             isCooldownActive = false;
             toggleBtn.disabled = false;
@@ -888,7 +1061,7 @@
             statusMessage.style.color = 'red';
             statusMessage.textContent = '未找到任何 <code> 标签可提取。';
             alert('未找到任何 <code> 标签可提取。');
-            // Reset cooldown if there's an immediate error
+            // 如果立即出错，重置冷却
             clearInterval(cooldownIntervalId);
             isCooldownActive = false;
             toggleBtn.disabled = false;
@@ -903,7 +1076,7 @@
             problemName: problemName,
             samples: samples
         };
-        console.log('OICPP sampleTester: handleToggleButtonClick - 准备发送的数据:', payload);
+        console.log('OICPP SampleTester: handleToggleButtonClick - 准备发送的数据:', payload);
 
         sendProblemToAPI(payload, statusMessage);
 
