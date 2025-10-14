@@ -1,0 +1,38 @@
+name: Obfuscate Tampermonkey Script
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'public/fetch_tampermonkey.user.js'
+
+jobs:
+  obfuscate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        persist-credentials: false
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install javascript-obfuscator
+      run: npm install -g javascript-obfuscator
+
+    - name: Obfuscate script
+      run: javascript-obfuscator fetch_tampermonkey.user.js --output public/fetch_tampermonkey.user.js
+
+    - name: Commit obfuscated file
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add public/fetch_tampermonkey.user.js
+        git commit -m "feat: Obfuscate fetch_tampermonkey.user.js" || echo "No changes to commit"
+        git push
