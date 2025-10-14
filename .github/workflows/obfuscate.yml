@@ -26,8 +26,21 @@ jobs:
     - name: Install javascript-obfuscator
       run: npm install -g javascript-obfuscator
 
+    - name: Extract UserScript header
+      id: extract_header
+      run: |
+        HEADER=$(sed -n '/^\/\/ ==UserScript==/,/^\/\/ ==\/UserScript==/p' fetch_tampermonkey.user.js)
+        echo "header<<EOF" >> $GITHUB_OUTPUT
+        echo "$HEADER" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
     - name: Obfuscate script
-      run: javascript-obfuscator fetch_tampermonkey.user.js --output public/fetch_tampermonkey.user.js
+      run: javascript-obfuscator fetch_tampermonkey.user.js --output obfuscated_script.js --exclude '// ==UserScript==' '// ==/UserScript=='
+
+    - name: Combine header and obfuscated script
+      run: |
+        echo "${{ steps.extract_header.outputs.header }}" > public/fetch_tampermonkey.user.js
+        cat obfuscated_script.js >> public/fetch_tampermonkey.user.js
 
     - name: Commit obfuscated file
       run: |
