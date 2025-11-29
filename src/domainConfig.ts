@@ -117,7 +117,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
     },
     'atcoder.jp': {
         ojName: 'atcoder',
-        codeSelectors: ['div[lang="en"] pre[id^="pre-sample"]'],
+        codeSelectors: ['pre[id^="pre-sample"]'],
         problemNameSelector: 'span.h2',
         specialProblemNameExtraction: (element) => {
             const pathname = window.location.pathname;

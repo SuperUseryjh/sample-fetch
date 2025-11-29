@@ -31,6 +31,13 @@ export function extractCodeSnippets(): Sample[] {
     }
     console.log('OICPP SampleTester: extractCodeSnippets - 找到的原始片段:', rawSnippets);
 
+    // 如果是 Atcoder 并且 rawSnippets 数量是偶数，只保留前半部分
+    if (hostname === 'atcoder.jp' && rawSnippets.length % 2 === 0 && rawSnippets.length > 0) {
+        const halfLength = rawSnippets.length / 2;
+        rawSnippets.splice(halfLength); // 移除后半部分
+        console.log('OICPP SampleTester: extractCodeSnippets - Atcoder 页面，只保留前半部分样例。');
+    }
+
     const pairedSamples: Sample[] = [];
     let defaultTimeLimit = 1000; // 默认时间限制
     let defaultMemoryLimit = 512; // 默认内存限制
