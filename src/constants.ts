@@ -1,0 +1,14 @@
+export const API_URL = "http://127.0.0.1:20030/createNewProblem";
+export const PANEL_ID = 'fetchProblemPanel';
+export const TOGGLE_BTN_ID = 'fetchProblemToggleBtn';
+export const TEMP_STATUS_ID = 'fetchProblemTempStatus';
+export const DRAG_THRESHOLD = 5; // 拖动阈值，小于此值视为点击
+export const COOLDOWN_DURATION_MS = 3000; // 5秒冷却时间
+
+// 指引常量
+export const GUIDE_POPOVER_ID = 'fetchProblemGuidePopover';
+export const GUIDE_OVERLAY_ID = 'fetchProblemGuideOverlay';
+export const GUIDE_STORAGE_KEY = 'fetchProblemGuideShown';
+export const LOCAL_STORAGE_POS_X = 'fetchProblemToggleBtnPosX';
+export const LOCAL_STORAGE_POS_Y = 'fetchProblemToggleBtnPosY';
+export const STATE_SELECTION_PANEL_ID = 'htojStateSelectionPanel';

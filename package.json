@@ -1,0 +1,16 @@
+{
+  "name": "oicpp-sample-tester",
+  "version": "1.0.3",
+  "description": "从 OJ 平台获取题目样例并发送到 OICPP 的油猴脚本",
+  "main": "dist/fetch_tampermonkey.user.js",
+  "scripts": {
+    "build": "tsc && node scripts/bundle.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "Mr_Onion & mywwzh",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

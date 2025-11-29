@@ -1,0 +1,62 @@
+name: 编译并发布油猴脚本
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 检出仓库
+      uses: actions/checkout@v4
+
+    - name: 安装 Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: 安装依赖
+      run: npm install
+
+    - name: 编译 TypeScript
+      run: npx tsc
+
+    - name: 组合油猴脚本
+      run: |
+        METADATA=$(cat src/metadata.ts)
+        COMPILED_JS=$(cat dist/main.js) # 假设你的主入口文件编译后是 dist/main.js
+        
+        echo "$METADATA" > dist/fetch_tampermonkey.user.js
+        echo "$COMPILED_JS" >> dist/fetch_tampermonkey.user.js
+        
+        echo "Tampermonkey script combined successfully!"
+
+    - name: 添加元信息
+      id: get_version
+      run: |
+        VERSION=$(grep -oP '@version\s+\K[0-9.]+' src/metadata.ts)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: 创建 GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        release_name: Release v${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
+
+    - name: 上传油猴脚本到 Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/fetch_tampermonkey.user.js
+        asset_name: fetch_tampermonkey.user.js
+        asset_content_type: application/javascript
