@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OICPP sampleTester
 // @namespace    https://oicpp.mywwzh.top/
-// @version      1.0.4-alpha1
+// @version      1.0.4-alpha2
 // @description  从 OJ 平台获取题目样例并发送到 OICPP
 // @author       Mr_Onion & mywwzh
 // @match        https://www.luogu.com.cn/problem/*
