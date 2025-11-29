@@ -29,12 +29,8 @@ jobs:
 
     - name: 组合油猴脚本
       run: |
-        METADATA=$(cat src/metadata.ts)
-        BUNDLED_JS=$(cat dist/bundle.js)
-        
-        echo "$METADATA" > dist/fetch_tampermonkey.user.js
-        echo "$BUNDLED_JS" >> dist/fetch_tampermonkey.user.js
-        
+        cat src/metadata.ts > dist/fetch_tampermonkey.user.js
+        cat dist/bundle.js >> dist/fetch_tampermonkey.user.js
         echo "Tampermonkey script combined successfully!"
 
     - name: 添加元信息
