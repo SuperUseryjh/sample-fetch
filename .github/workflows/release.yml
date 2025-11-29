@@ -24,13 +24,16 @@ jobs:
     - name: 编译 TypeScript
       run: npx tsc
 
+    - name: 运行构建脚本
+      run: npm run build
+
     - name: 组合油猴脚本
       run: |
         METADATA=$(cat src/metadata.ts)
-        COMPILED_JS=$(cat dist/main.js) # 假设你的主入口文件编译后是 dist/main.js
+        BUNDLED_JS=$(cat dist/bundle.js)
         
         echo "$METADATA" > dist/fetch_tampermonkey.user.js
-        echo "$COMPILED_JS" >> dist/fetch_tampermonkey.user.js
+        echo "$BUNDLED_JS" >> dist/fetch_tampermonkey.user.js
         
         echo "Tampermonkey script combined successfully!"
 
