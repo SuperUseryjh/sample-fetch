@@ -28,15 +28,12 @@ jobs:
       run: npm run build
 
     - name: 组合油猴脚本
-      run: |
-        cat src/metadata.ts > dist/fetch_tampermonkey.user.js
-        cat dist/bundle.js >> dist/fetch_tampermonkey.user.js
-        echo "Tampermonkey script combined successfully!"
+      run: node scripts/generate-userscript.js
 
     - name: 获取版本信息
       id: get_version
       run: |
-        FULL_VERSION=$(grep -oP '@version\s+\K[0-9a-zA-Z.-]+' src/metadata.ts)
+        FULL_VERSION=$(node -p "require('./package.json').version")
         echo "full_version=$FULL_VERSION" >> $GITHUB_OUTPUT
         
         # 检查是否为预发布版本 (例如，包含字母或连字符)
