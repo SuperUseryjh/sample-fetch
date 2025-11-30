@@ -169,7 +169,11 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         codeSelectors: ['div.input pre', 'div.output pre'],
         codeforcesLineExtractor: (element) => {
             const lines = Array.from(element.querySelectorAll('div.test-example-line')).map(line => line.textContent);
-            return lines.join('\n').trim();
+            if (lines.length > 0) {
+                return lines.join('\n').trim();
+            }
+            // 如果没有找到 div.test-example-line，则直接获取 pre 元素的文本内容
+            return element.textContent!.trim();
         },
         problemNameSelector: 'div.title',
         specialProblemNameExtraction: (element) => {

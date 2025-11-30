@@ -19,15 +19,28 @@ export function extractCodeSnippets(): Sample[] {
         });
     } else {
         console.log('OICPP SampleTester: extractCodeSnippets - 使用域名特定配置:', config);
-        config.codeSelectors.forEach(selector => {
-            document.querySelectorAll(selector).forEach(element => {
-                if (config.codeforcesLineExtractor && (hostname === 'codeforces.com')) {
-                    rawSnippets.push(config.codeforcesLineExtractor(element as HTMLElement));
-                } else {
-                    rawSnippets.push(element.textContent!.trim());
-                }
+        if (hostname === 'codeforces.com' && config.codeforcesLineExtractor) {
+            const inputSnippets: string[] = [];
+            const outputSnippets: string[] = [];
+
+            document.querySelectorAll('div.input pre').forEach(element => {
+                inputSnippets.push(config.codeforcesLineExtractor!(element as HTMLElement));
             });
-        });
+            document.querySelectorAll('div.output pre').forEach(element => {
+                outputSnippets.push(config.codeforcesLineExtractor!(element as HTMLElement));
+            });
+
+            for (let i = 0; i < inputSnippets.length && i < outputSnippets.length; i++) {
+                rawSnippets.push(inputSnippets[i]);
+                rawSnippets.push(outputSnippets[i]);
+            }
+        } else {
+            config.codeSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(element => {
+                    rawSnippets.push(element.textContent!.trim());
+                });
+            });
+        }
     }
     console.log('OICPP SampleTester: extractCodeSnippets - 找到的原始片段:', rawSnippets);
 
