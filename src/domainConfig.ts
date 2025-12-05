@@ -315,5 +315,69 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
             return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'codeforcesButtonState'
+    },
+    'hydro.ac': {
+        ojName: 'Hydro',
+        codeSelectors: ['pre.syntax-hl code'],
+        problemNameSelector: 'h1.problem-title', // 假设题目名称选择器
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
+                const inputCode = sampleDiv.querySelector('code.language-input1');
+                const outputCode = sampleDiv.querySelector('code.language-output1');
+                if (inputCode) {
+                    rawSnippets.push(inputCode.textContent!.trim());
+                }
+                if (outputCode) {
+                    rawSnippets.push(outputCode.textContent!.trim());
+                }
+            });
+
+            let timeLimit = 1000; // Default
+            let memoryLimit = 512; // Default
+
+            const timeLimitElement = document.querySelector('span.problem__tag-item.icon.icon-stopwatch');
+            if (timeLimitElement) {
+                const text = timeLimitElement.textContent!;
+                const match = text.match(/(\d+\.?\d*)\s*(s|ms)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 's') {
+                        timeLimit = num * 1000;
+                    } else {
+                        timeLimit = num;
+                    }
+                }
+            }
+
+            const memoryLimitElement = document.querySelector('span.problem__tag-item.icon.icon-comparison');
+            if (memoryLimitElement) {
+                const text = memoryLimitElement.textContent!;
+                const match = text.match(/(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 'gb') {
+                        memoryLimit = num * 1024;
+                    } else {
+                        memoryLimit = num;
+                    }
+                }
+            }
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
+        },
+        buttonStateKey: 'hydroButtonState'
     }
 };
