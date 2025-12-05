@@ -12,20 +12,25 @@ export interface Payload {
     samples: Sample[];
 }
 
+export interface ExtractResult {
+    samples: Sample[];
+    timeLimit: number;
+    memoryLimit: number;
+}
+
+export type ExtractFunction = () => ExtractResult;
+
 export interface DomainConfig {
     ojName: string;
     codeSelectors: string[];
     problemNameSelector: string;
     specialProblemNameExtraction?: (element: HTMLElement) => string;
-    extractLuoguLimits?: () => { timeLimit: number; memoryLimit: number; };
-    extractTimeAndMemoryLimits?: () => { timeLimit: number; memoryLimit: number; };
-    extractAtcoderLimits?: () => { timeLimit: number; memoryLimit: number; };
     codeforcesLineExtractor?: (element: HTMLElement) => string;
-    extractCodeforcesLimits?: () => { timeLimit: number; memoryLimit: number; };
     timeLimitSelector?: string;
     memoryLimitSelector?: string;
     buttonStateKey: string;
     initialStatusMessage?: string;
+    extract: ExtractFunction;
 }
 
 export interface GuideStep {

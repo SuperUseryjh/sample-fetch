@@ -5,7 +5,12 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         ojName: 'Luogu',
         codeSelectors: ['pre.lfe-code'],
         problemNameSelector: 'h1.lfe-h1',
-        extractLuoguLimits: () => {
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('pre.lfe-code').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
+            });
+
             let timeLimit = 1000; // Default
             let memoryLimit = 512; // Default
 
@@ -41,7 +46,20 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
                     }
                 }
             });
-            return { timeLimit, memoryLimit };
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'luoguButtonState'
     },
@@ -49,7 +67,12 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         ojName: 'Luogu',
         codeSelectors: ['pre.lfe-code'],
         problemNameSelector: 'h1.lfe-h1',
-        extractLuoguLimits: () => {
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('pre.lfe-code').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
+            });
+
             let timeLimit = 1000; // Default
             let memoryLimit = 512; // Default
 
@@ -85,7 +108,20 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
                     }
                 }
             });
-            return { timeLimit, memoryLimit };
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'luoguButtonState'
     },
@@ -104,14 +140,30 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
             }
             return '';
         },
-        timeLimitSelector: 'div.mt-3.inline-flex > div:nth-child(1) > div.mx-3 > div:nth-child(2)',
-        memoryLimitSelector: 'div.mt-3.inline-flex > div:nth-child(2) > div.mx-3 > div:nth-child(2)',
-        extractTimeAndMemoryLimits: () => {
-            const timeLimitElement = document.querySelector(domainConfigs['htoj.com.cn'].timeLimitSelector!);
-            const memoryLimitElement = document.querySelector(domainConfigs['htoj.com.cn'].memoryLimitSelector!); 
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('div.md-editor-code pre code span.md-editor-code-block').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
+            });
+
+            const timeLimitElement = document.querySelector('div.mt-3.inline-flex > div:nth-child(1) > div.mx-3 > div:nth-child(2)');
+            const memoryLimitElement = document.querySelector('div.mt-3.inline-flex > div:nth-child(2) > div.mx-3 > div:nth-child(2)'); 
             const timeLimit = timeLimitElement ? parseInt(timeLimitElement.textContent!.trim()) : 1000; // 默认 1000ms
             const memoryLimit = memoryLimitElement ? parseInt(memoryLimitElement.textContent!.trim()) : 512; // 默认 512MB
-            return { timeLimit, memoryLimit };
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'htojButtonState'
     },
@@ -133,7 +185,18 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
             }
             return clonedTitle.textContent!.trim();
         },
-        extractAtcoderLimits: () => {
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('pre[id^="pre-sample"]').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
+            });
+
+            // 如果是 Atcoder 并且 rawSnippets 数量是偶数，只保留前半部分
+            if (rawSnippets.length % 2 === 0 && rawSnippets.length > 0) {
+                const halfLength = rawSnippets.length / 2;
+                rawSnippets.splice(halfLength); // 移除后半部分
+            }
+
             let timeLimit = 2000; // Default to 2 seconds (2000ms)
             let memoryLimit = 1024; // Default to 1024 MiB
 
@@ -160,35 +223,53 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
                     }
                 }
             }
-            return { timeLimit, memoryLimit };
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'atcoderButtonState'
     },
     'codeforces.com': {
         ojName: 'codeforces',
         codeSelectors: ['div.input pre', 'div.output pre'],
-        codeforcesLineExtractor: (element) => {
-            const lines = Array.from(element.querySelectorAll('div.test-example-line')).map(line => line.textContent);
-            if (lines.length > 0) {
-                return lines.join('\n').trim();
-            }
-            // 如果没有找到 div.test-example-line，则直接获取 pre 元素的文本内容
-            return element.textContent!.trim();
-        },
         problemNameSelector: 'div.title',
-        specialProblemNameExtraction: (element) => {
-            const pathname = window.location.pathname;
-            const problemMatch = pathname.match(/\/problemset\/problem\/(\d+)\/([A-Z])$/);
-            if (problemMatch && problemMatch[1] && problemMatch[2]) {
-                const contestId = problemMatch[1];
-                const problemLetter = problemMatch[2].toLowerCase();
-                return `cf${contestId}_${problemLetter}`;
+        extract: () => {
+            const rawSnippets: string[] = [];
+            const codeforcesLineExtractor = (element: HTMLElement) => {
+                const lines = Array.from(element.querySelectorAll('div.test-example-line')).map(line => line.textContent);
+                if (lines.length > 0) {
+                    return lines.join('\n').trim();
+                }
+                return element.textContent!.trim();
+            };
+
+            const inputSnippets: string[] = [];
+            const outputSnippets: string[] = [];
+
+            document.querySelectorAll('div.input pre').forEach(element => {
+                inputSnippets.push(codeforcesLineExtractor(element as HTMLElement));
+            });
+            document.querySelectorAll('div.output pre').forEach(element => {
+                outputSnippets.push(codeforcesLineExtractor(element as HTMLElement));
+            });
+
+            for (let i = 0; i < inputSnippets.length && i < outputSnippets.length; i++) {
+                rawSnippets.push(inputSnippets[i]);
+                rawSnippets.push(outputSnippets[i]);
             }
-            // Fallback to existing logic if not a /problemset/problem/ URL
-            return element.textContent!.trim();
-        },
-        extractCodeforcesLimits: () => {
-            let timeLimit = 2000; // 默认 2 秒 (2000ms)
+
+            let timeLimit = 2000; // 默��� 2 秒 (2000ms)
             let memoryLimit = 256; // 默认 256 MB
 
             const timeLimitElement = document.querySelector('div.time-limit');
@@ -218,7 +299,20 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
                     }
                 }
             }
-            return { timeLimit, memoryLimit };
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'codeforcesButtonState'
     }
