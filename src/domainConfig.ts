@@ -319,7 +319,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
     'hydro.ac': {
         ojName: 'Hydro',
         codeSelectors: ['pre.syntax-hl code'],
-        problemNameSelector: 'h1.problem-title', // 假设题目名称选择器
+        problemNameSelector: 'h1.section__title',
         extract: () => {
             const rawSnippets: string[] = [];
             document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
