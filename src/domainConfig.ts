@@ -323,8 +323,8 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         extract: () => {
             const rawSnippets: string[] = [];
             document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
-                const inputCode = sampleDiv.querySelector('code.language-input1');
-                const outputCode = sampleDiv.querySelector('code.language-output1');
+                const inputCode = sampleDiv.querySelector('code[class^="language-input"]');
+                const outputCode = sampleDiv.querySelector('code[class^="language-output"]');
                 if (inputCode) {
                     rawSnippets.push(inputCode.textContent!.trim());
                 }
