@@ -251,7 +251,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
                 if (lines.length > 0) {
                     return lines.join('\n').trim();
                 }
-                return element.textContent!.trim();
+                return element.textContent!.replace(/<br\s*\/?>|<\/br>/gi, '\n').trim();
             };
 
             const inputSnippets: string[] = [];
@@ -269,7 +269,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
                 rawSnippets.push(outputSnippets[i]);
             }
 
-            let timeLimit = 2000; // 默��� 2 秒 (2000ms)
+            let timeLimit = 2000; // 默认 2 秒 (2000ms)
             let memoryLimit = 256; // 默认 256 MB
 
             const timeLimitElement = document.querySelector('div.time-limit');
