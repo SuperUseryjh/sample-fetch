@@ -246,12 +246,17 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         problemNameSelector: 'div.title',
         extract: () => {
             const rawSnippets: string[] = [];
-            const codeforcesLineExtractor = (element: HTMLElement) => {
-                const lines = Array.from(element.querySelectorAll('div.test-example-line')).map(line => line.textContent);
+            const codeforcesLineExtractor = (element: HTMLElement): string => {
+                const lineElements = element.querySelectorAll<HTMLDivElement>("div.test-example-line");
+                const lines: string[] = Array.from(lineElements).map((line) => line.textContent || "");
                 if (lines.length > 0) {
-                    return lines.join('\n').trim();
+                    return lines.join("\n").trim();
                 }
-                return element.textContent!.replace(/<br\s*\/?>|<\/br>/gi, '\n').trim();
+                const tempElement = element.cloneNode(true) as HTMLElement;
+                const htmlContent: string = tempElement.innerHTML;
+                const replacedHtml: string = htmlContent.replace(/<br\s*\/?>|<\/\s*br>/gi, "\n");
+                tempElement.innerHTML = replacedHtml;
+                return (tempElement.textContent || "").trim();
             };
 
             const inputSnippets: string[] = [];
