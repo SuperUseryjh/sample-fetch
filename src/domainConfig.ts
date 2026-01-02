@@ -8,7 +8,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         extract: () => {
             const rawSnippets: string[] = [];
             document.querySelectorAll('pre.lfe-code').forEach(element => {
-                rawSnippets.push(element.textContent!.trim());
+                rawSnippets.push(element.textContent!);
             });
 
             let timeLimit = 1000; // Default
@@ -70,7 +70,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         extract: () => {
             const rawSnippets: string[] = [];
             document.querySelectorAll('pre.lfe-code').forEach(element => {
-                rawSnippets.push(element.textContent!.trim());
+                rawSnippets.push(element.textContent!);
             });
 
             let timeLimit = 1000; // Default
@@ -384,5 +384,60 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
             return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'hydroButtonState'
+    },
+    'www.yanhaozhe.cn': {
+        ojName: 'SYZOJ',
+        codeSelectors: ['div.ui.existing.segment pre code'],
+        problemNameSelector: 'h1.ui.header',
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('div.ui.existing.segment pre code').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
+            });
+
+            let timeLimit = 1000; // Default
+            let memoryLimit = 256; // Default
+
+            const timeLimitElement = document.evaluate("//span[contains(text(), '时间限制：')]/text()", document, null, XPathResult.STRING_TYPE, null).stringValue;
+            if (timeLimitElement) {
+                const match = timeLimitElement.match(/(\d+\.?\d*)\s*(ms|s)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 's') {
+                        timeLimit = num * 1000;
+                    } else {
+                        timeLimit = num;
+                    }
+                }
+            }
+
+            const memoryLimitElement = document.evaluate("//span[contains(text(), '内存限制：')]/text()", document, null, XPathResult.STRING_TYPE, null).stringValue;
+            if (memoryLimitElement) {
+                const match = memoryLimitElement.match(/(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 'gb') {
+                        memoryLimit = num * 1024;
+                    } else {
+                        memoryLimit = num;
+                    }
+                }
+            }
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
+        },
+        buttonStateKey: 'SYZOJButtonState'
     }
 };
