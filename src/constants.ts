@@ -12,3 +12,6 @@ export const GUIDE_STORAGE_KEY = 'fetchProblemGuideShown';
 export const LOCAL_STORAGE_POS_X = 'fetchProblemToggleBtnPosX';
 export const LOCAL_STORAGE_POS_Y = 'fetchProblemToggleBtnPosY';
 export const STATE_SELECTION_PANEL_ID = 'htojStateSelectionPanel';
+export const CONTROL_BTN_ID = 'fetchProblemControlBtn';
+export const PROBLEM_NAME_MODE_KEY = 'fetchProblemNameMode';
+export const PROBLEM_NAME_CUSTOM_INPUT_KEY = 'fetchProblemNameCustomInput';

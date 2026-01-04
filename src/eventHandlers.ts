@@ -1,4 +1,4 @@
-import { TOGGLE_BTN_ID, COOLDOWN_DURATION_MS } from './constants';
+import { TOGGLE_BTN_ID, COOLDOWN_DURATION_MS, PROBLEM_NAME_MODE_KEY, PROBLEM_NAME_CUSTOM_INPUT_KEY } from './constants';
 import { DomainConfig, Payload } from './types';
 import { extractCodeSnippets, getProblemName } from './domSelectors';
 import { sendProblemToAPI } from './api';
@@ -18,6 +18,15 @@ let cooldownIntervalId: number | null = null; // 用于存储倒计时 interval 
 export async function handleCreateProblem(ojInput: HTMLInputElement, problemNameInput: HTMLInputElement, statusMessage: HTMLElement, panel: HTMLElement) {
     const oj = ojInput.value;
     let problemName = problemNameInput.value;
+    const problemNameMode = localStorage.getItem(PROBLEM_NAME_MODE_KEY) || 'default';
+
+    if (problemNameMode === 'custom') {
+        // 如果是自定义模式，并且输入框内容以 .cpp 结尾，则去除后缀
+        if (problemName.toLowerCase().endsWith('.cpp')) {
+            problemName = problemName.substring(0, problemName.length - 4);
+        }
+    }
+
     if (problemName.length > 32) {
         console.warn('OICPP SampleTester: handleCreateProblem - 题目名称过长，已截断至32字符。');
         problemName = problemName.substring(0, 32);
@@ -110,7 +119,30 @@ export async function handleToggleButtonClick(config: DomainConfig) {
     statusMessage.style.display = 'block';
 
     const oj = config ? config.ojName : '';
-    let problemName = getProblemName();
+    let problemName = '';
+    const problemNameMode = localStorage.getItem(PROBLEM_NAME_MODE_KEY) || 'default';
+
+    if (problemNameMode === 'custom') {
+        let customName = prompt('请输入题目名称 (例如: A+B Problem，将保存为 A+B Problem.cpp): ', localStorage.getItem(PROBLEM_NAME_CUSTOM_INPUT_KEY) || '');
+        if (customName === null || customName.trim() === '') {
+            statusMessage.style.color = 'red';
+            statusMessage.textContent = '题目名称不能为空，操作已取消。';
+            alert('题目名称不能为空，操作已取消。');
+            // 如果立即出错，重置冷却
+            window.clearInterval(cooldownIntervalId!);
+            isCooldownActive = false;
+            toggleBtn.disabled = false;
+            toggleBtn.style.cursor = 'grab';
+            cooldownCountdownSpan.style.display = 'none';
+            cooldownCountdownSpan.textContent = '';
+            return;
+        }
+        localStorage.setItem(PROBLEM_NAME_CUSTOM_INPUT_KEY, customName.trim());
+        problemName = customName.trim();
+    } else {
+        problemName = getProblemName();
+    }
+
     if (problemName.length > 32) {
         console.warn('OICPP SampleTester: handleToggleButtonClick - 题目名称过长，已截断至32字符。');
         problemName = problemName.substring(0, 32);
