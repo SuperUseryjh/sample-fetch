@@ -87,7 +87,7 @@ export function createToggleButtonUI(): HTMLElement {
 export function createControlPanelButtonUI(): HTMLElement {
     const controlBtn = document.createElement('button');
     controlBtn.id = CONTROL_BTN_ID;
-    controlBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.78 1.35a2 2 0 0 0 .73 2.73l.15.08a2 2 0 0 1 1 1.73v.56a2 2 0 0 1-1 1.73l-.15.08a2 2 0 0 0-.73 2.73l.78 1.35a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.78-1.35a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.73v-.56a2 2 0 0 1 1-1.73l.15-.08a2 2 0 0 0 .73-2.73l-.78-1.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-1-1.73V2h-.01Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    controlBtn.innerHTML = `⚙️`;
     controlBtn.title = '设置题目名称模式';
     controlBtn.style.cssText = `
         position: fixed;
@@ -201,8 +201,99 @@ export function createProblemNameSettingsPanel() {
     panel.querySelector<HTMLButtonElement>('#saveProblemNameSettingsBtn')!.addEventListener('click', () => {
         const selectedMode = (document.querySelector('input[name="problemNameMode"]:checked') as HTMLInputElement).value;
         localStorage.setItem(PROBLEM_NAME_MODE_KEY, selectedMode);
-        alert('设置已保存！');
+        showCustomDialog('设置已保存！');
         panel!.remove();
+    });
+}
+
+/**
+ * 显示一个自定义的 HTML 弹窗，可以包含消息和可选的输入框。
+ * @param {string} message - 弹窗中显示的消息。
+ * @param {string} [inputValue=''] - 输入框的初始值（如果存在输入框）。
+ * @param {boolean} [showInput=false] - 是否显示输入框。
+ * @param {string} [inputPlaceholder=''] - 输入框的占位符文本。
+ * @returns {Promise<string | null>} 如果有输入框，返回用户输入的值；否则返回 'ok' 或 null（如果用户取消）。
+ */
+export function showCustomDialog(message: string, inputValue: string = '', showInput: boolean = false, inputPlaceholder: string = ''): Promise<string | null> {
+    return new Promise((resolve) => {
+        let dialogOverlay = document.getElementById('customDialogOverlay');
+        if (!dialogOverlay) {
+            dialogOverlay = document.createElement('div');
+            dialogOverlay.id = 'customDialogOverlay';
+            dialogOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 2147483647; /* 确保在最上层 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            document.body.appendChild(dialogOverlay);
+        }
+
+        const dialogBox = document.createElement('div');
+        dialogBox.style.cssText = `
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+        `;
+
+        dialogBox.innerHTML = `
+            <p style="margin-bottom: 15px; font-size: 16px;">${message}</p>
+            ${showInput ? `<input type="text" id="customDialogInput" value="${inputValue}" placeholder="${inputPlaceholder}" style="width: calc(100% - 20px); padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">` : ''}
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button id="customDialogOkBtn" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">确定</button>
+                ${showInput ? `<button id="customDialogCancelBtn" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>` : ''}
+            </div>
+        `;
+
+        dialogOverlay.appendChild(dialogBox);
+        dialogOverlay.style.display = 'flex';
+
+        const okBtn = dialogBox.querySelector<HTMLButtonElement>('#customDialogOkBtn');
+        const cancelBtn = dialogBox.querySelector<HTMLButtonElement>('#customDialogCancelBtn');
+        const inputElement = dialogBox.querySelector<HTMLInputElement>('#customDialogInput');
+
+        const closeDialog = (result: string | null) => {
+            dialogOverlay!.remove();
+            resolve(result);
+        };
+
+        okBtn?.addEventListener('click', () => {
+            if (showInput) {
+                closeDialog(inputElement?.value || '');
+            } else {
+                closeDialog('ok');
+            }
+        });
+
+        cancelBtn?.addEventListener('click', () => {
+            closeDialog(null);
+        });
+
+        // 允许按 Enter 键确认，Esc 键取消
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                okBtn?.click();
+            } else if (e.key === 'Escape') {
+                cancelBtn?.click();
+            }
+        }, { once: true }); // 只监听一次，避免重复触发
+
+        if (showInput && inputElement) {
+            inputElement.focus();
+        }
     });
 }
 

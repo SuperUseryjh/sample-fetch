@@ -2,7 +2,7 @@ import { TOGGLE_BTN_ID, COOLDOWN_DURATION_MS, PROBLEM_NAME_MODE_KEY, PROBLEM_NAM
 import { DomainConfig, Payload } from './types';
 import { extractCodeSnippets, getProblemName } from './domSelectors';
 import { sendProblemToAPI } from './api';
-import { createTemporaryStatusMessage } from './ui'; // 导入 createTemporaryStatusMessage
+import { createTemporaryStatusMessage, showCustomDialog } from './ui'; // 导入 createTemporaryStatusMessage 和 showCustomDialog
 
 let isCooldownActive = false; // 冷却状态变量
 let cooldownIntervalId: number | null = null; // 用于存储倒计时 interval ID
@@ -33,7 +33,7 @@ export async function handleCreateProblem(ojInput: HTMLInputElement, problemName
     }
 
     if (!oj || !problemName) {
-        alert('OJ 和 题目名称不能为空！');
+        showCustomDialog('OJ 和 题目名称不能为空！');
         if (panel.style.display === 'none') {
             panel.style.display = 'block';
         }
@@ -49,7 +49,7 @@ export async function handleCreateProblem(ojInput: HTMLInputElement, problemName
     const samples = extractCodeSnippets();
 
     if (samples.length === 0) {
-        alert('未找到任何 <code> 标签可提取。');
+        showCustomDialog('未找到任何 <code> 标签可提取。');
         if (panel.style.display === 'none') {
             panel.style.display = 'block';
         }
@@ -123,11 +123,9 @@ export async function handleToggleButtonClick(config: DomainConfig) {
     const problemNameMode = localStorage.getItem(PROBLEM_NAME_MODE_KEY) || 'default';
 
     if (problemNameMode === 'custom') {
-        let customName = prompt('请输入题目名称 (例如: A+B Problem，将保存为 A+B Problem.cpp): ', localStorage.getItem(PROBLEM_NAME_CUSTOM_INPUT_KEY) || '');
+        let customName = await showCustomDialog('请输入题目名称 (例如: A+B Problem，将保存为 A+B Problem.cpp): ', localStorage.getItem(PROBLEM_NAME_CUSTOM_INPUT_KEY) || '', true, '题目名称');
         if (customName === null || customName.trim() === '') {
-            statusMessage.style.color = 'red';
-            statusMessage.textContent = '题目名称不能为空，操作已取消。';
-            alert('题目名称不能为空，操作已取消。');
+            showCustomDialog('题目名称不能为空，操作已取消。');
             // 如果立即出错，重置冷却
             window.clearInterval(cooldownIntervalId!);
             isCooldownActive = false;
@@ -151,7 +149,7 @@ export async function handleToggleButtonClick(config: DomainConfig) {
     if (!oj || !problemName) {
         statusMessage.style.color = 'red';
         statusMessage.textContent = 'OJ 或 题目名称无法自动获取，请手动操作或刷新页面。';
-        alert('OJ 或 题目名称无法自动获取，请手动操作或刷新页面。');
+        showCustomDialog('OJ 或 题目名称无法自动获取，请手动操作或刷新页面。');
         // 如果立即出错，重置冷却
         window.clearInterval(cooldownIntervalId!);
         isCooldownActive = false;
@@ -167,7 +165,7 @@ export async function handleToggleButtonClick(config: DomainConfig) {
     if (samples.length === 0) {
         statusMessage.style.color = 'red';
         statusMessage.textContent = '未找到任何 <code> 标签可提取。';
-        alert('未找到任何 <code> 标签可提取。');
+        showCustomDialog('未找到任何 <code> 标签可提取。');
         // 如果立即出错，重置冷却
         window.clearInterval(cooldownIntervalId!);
         isCooldownActive = false;
