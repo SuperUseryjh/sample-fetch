@@ -139,6 +139,46 @@ export function createTemporaryStatusMessage(): HTMLElement {
 }
 
 /**
+ * 限制按钮位置在屏幕可见区域内。
+ * @param {HTMLElement} button - 按钮元素。
+ * @param {number} currentRight - 当前的 right 值。
+ * @param {number} currentTop - 当前的 top 值。
+ * @returns {{right: number, top: number}} 调整后的 right 和 top 值。
+ */
+function clampButtonPosition(button: HTMLElement, currentRight: number, currentTop: number): { right: number, top: number } {
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const buttonRect = button.getBoundingClientRect();
+
+    let newRight = currentRight;
+    let newTop = currentTop;
+
+    // 检查右侧边界
+    if (viewportWidth - currentRight < buttonRect.width) {
+        newRight = viewportWidth - buttonRect.width - 10; // 留出 10px 边距
+    }
+    // 检查左侧边界 (right 值越大，按钮越靠左)
+    if (currentRight > viewportWidth - 10) { // 假设按钮宽度为 50px，右侧至少留 10px
+        newRight = 10; // 弹回右侧 10px
+    }
+
+    // 检查底部边界
+    if (viewportHeight - currentTop < buttonRect.height) {
+        newTop = viewportHeight - buttonRect.height - 10; // 留出 10px 边距
+    }
+    // 检查顶部边界
+    if (currentTop < 10) {
+        newTop = 10; // 弹回顶部 10px
+    }
+
+    // 确保 right 和 top 不会是负值
+    newRight = Math.max(10, newRight); // 最小 right 值为 10px
+    newTop = Math.max(10, newTop);     // 最小 top 值为 10px
+
+    return { right: newRight, top: newTop };
+}
+
+/**
  * 创建并显示题目名称设置面板。
  */
 export function createProblemNameSettingsPanel() {
@@ -499,17 +539,22 @@ export function initializeUI() {
         if (state === 'fixed') {
             console.log('OICPP SampleTester: initializeUI - HTOJ 按钮 (固定) 已停用，切换到悬浮按钮。');
         }
-        toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
-        // Load position from localStorage
+        toggleBtn = createToggleButtonUI();
         const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
         const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
         if (savedRight !== null && savedTop !== null) {
-            toggleBtn.style.right = `${parseFloat(savedRight)}px`;
-            toggleBtn.style.top = `${parseFloat(savedTop)}px`;
-            console.log(`OICPP SampleTester: 已加载按钮位置 (悬浮): right=${savedRight}, top=${savedTop}`);
+            let right = parseFloat(savedRight);
+            let top = parseFloat(savedTop);
+            const clampedPosition = clampButtonPosition(toggleBtn, right, top);
+            toggleBtn.style.right = `${clampedPosition.right}px`;
+            toggleBtn.style.top = `${clampedPosition.top}px`;
+            console.log(`OICPP SampleTester: 已加载按钮位置 (悬浮): right=${clampedPosition.right}, top=${clampedPosition.top}`);
         } else {
-            toggleBtn.style.right = '10px';
-            toggleBtn.style.top = '10px';
+            const defaultRight = 10;
+            const defaultTop = 10;
+            const clampedPosition = clampButtonPosition(toggleBtn, defaultRight, defaultTop);
+            toggleBtn.style.right = `${clampedPosition.right}px`;
+            toggleBtn.style.top = `${clampedPosition.top}px`;
             console.log('OICPP SampleTester: 已设置默认按钮位置 (悬浮)。');
         }
         const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
@@ -866,15 +911,19 @@ export function initializeUI() {
         const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);   // 现在 Y 存储的是 top
 
         if (savedRight !== null && savedTop !== null) {
-            const right = parseFloat(savedRight);
-            const top = parseFloat(savedTop);
-            currentToggleBtn.style.right = `${right}px`;
-            currentToggleBtn.style.top = `${top}px`;
-            console.log(`OICPP SampleTester: 已加载按钮位置: right=${right}, top=${top}`);
+            let right = parseFloat(savedRight);
+            let top = parseFloat(savedTop);
+            const clampedPosition = clampButtonPosition(currentToggleBtn, right, top);
+            currentToggleBtn.style.right = `${clampedPosition.right}px`;
+            currentToggleBtn.style.top = `${clampedPosition.top}px`;
+            console.log(`OICPP SampleTester: 已加载按钮位置: right=${clampedPosition.right}, top=${clampedPosition.top}`);
         } else {
             // 如果没有保存的位置，则设置默认位置
-            currentToggleBtn.style.right = '10px';
-            currentToggleBtn.style.top = '10px';
+            const defaultRight = 10;
+            const defaultTop = 10;
+            const clampedPosition = clampButtonPosition(currentToggleBtn, defaultRight, defaultTop);
+            currentToggleBtn.style.right = `${clampedPosition.right}px`;
+            currentToggleBtn.style.top = `${clampedPosition.top}px`;
             console.log('OICPP SampleTester: 已设置默认按钮位置。');
         }
 
@@ -907,15 +956,19 @@ export function initializeUI() {
         const toggleBtn = document.getElementById(TOGGLE_BTN_ID);
 
         if (toggleBtn && savedRight !== null && savedTop !== null) {
-            const right = parseFloat(savedRight);
-            const top = parseFloat(savedTop);
-            toggleBtn.style.right = `${right}px`;
-            toggleBtn.style.top = `${top}px`;
-            console.log(`OICPP SampleTester: 窗口大小调整，重新应用按钮位置: right=${right}, top=${top}`);
+            let right = parseFloat(savedRight);
+            let top = parseFloat(savedTop);
+            const clampedPosition = clampButtonPosition(toggleBtn, right, top);
+            toggleBtn.style.right = `${clampedPosition.right}px`;
+            toggleBtn.style.top = `${clampedPosition.top}px`;
+            console.log(`OICPP SampleTester: 窗口大小调整，重新应用按钮位置: right=${clampedPosition.right}, top=${clampedPosition.top}`);
         } else if (toggleBtn) {
             // 如果没有保存的位置，则在调整大小时应用默认位置
-            toggleBtn.style.right = '10px';
-            toggleBtn.style.top = '10px';
+            const defaultRight = 10;
+            const defaultTop = 10;
+            const clampedPosition = clampButtonPosition(toggleBtn, defaultRight, defaultTop);
+            toggleBtn.style.right = `${clampedPosition.right}px`;
+            toggleBtn.style.top = `${clampedPosition.top}px`;
             console.log('OICPP SampleTester: 窗口大小调整，设置默认按钮位置。');
         }
     });
