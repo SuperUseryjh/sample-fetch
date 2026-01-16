@@ -36,6 +36,14 @@ jobs:
         FULL_VERSION=$(node -p "require('./package.json').version")
         echo "full_version=$FULL_VERSION" >> $GITHUB_OUTPUT
         
+        # 检查版本号是否符合 <数字>.<数字>.<数字> 的格式
+        if [[ "$FULL_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          IS_STANDARD_VERSION="true"
+        else
+          IS_STANDARD_VERSION="false"
+        fi
+        echo "is_standard_version=$IS_STANDARD_VERSION" >> $GITHUB_OUTPUT
+
         # 检查是否为预发布版本 (例如，包含字母或连字符)
         if [[ "$FULL_VERSION" =~ [a-zA-Z-] ]]; then
           IS_PRERELEASE="true"
@@ -64,3 +72,31 @@ jobs:
         asset_path: ./dist/fetch_tampermonkey.user.js
         asset_name: fetch_tampermonkey.user.js
         asset_content_type: application/javascript
+
+    - name: 检出 static 仓库
+      uses: actions/checkout@v4
+      with:
+        repository: SuperUseryjh/static
+        token: ${{ secrets.STATIC_REPO_TOKEN }} # 需要在仓库设置中配置此 Secret
+        path: static_repo
+
+    - name: 推送文件到 static 仓库
+      run: |
+        cd static_repo
+        if [ "${{ steps.get_version.outputs.is_standard_version }}" == "true" ]; then
+          echo "标准版本号，推送到 pub 目录"
+          mkdir -p oicpp/pub
+          cp ../dist/fetch_tampermonkey.user.js oicpp/pub/sampleTester.user.js
+          cp ../package.json oicpp/pub/version.json
+        else
+          echo "非标准版本号，推送到 perv 目录"
+          mkdir -p oicpp/perv
+          cp ../dist/fetch_tampermonkey.user.js oicpp/perv/sampleTester.user.js
+          cp ../package.json oicpp/perv/version.json
+        fi
+        
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add .
+        git commit -m "Update sampleTester.user.js and version.json for ${{ steps.get_version.outputs.full_version }}"
+        git push
