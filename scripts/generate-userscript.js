@@ -21,7 +21,12 @@ if (metadata.match && Array.isArray(metadata.match)) {
 }
 
 if (metadata.grant) {
+    if (!metadata.grant.includes('GM_info')) {
+        metadataBlock += `// @grant        GM_info\n`;
+    }
     metadataBlock += `// @grant        ${metadata.grant}\n`;
+} else {
+    metadataBlock += `// @grant        GM_info\n`;
 }
 
 if (metadata.connect && Array.isArray(metadata.connect)) {
@@ -32,10 +37,13 @@ if (metadata.connect && Array.isArray(metadata.connect)) {
 
 metadataBlock += '// ==/UserScript==\n';
 
+// 将版本号注入到脚本中
+const versionInjection = `const SCRIPT_VERSION = "${version}";\n\n`;
+
 // 读取捆绑的 JS 文件内容
 const bundledJsContent = fs.readFileSync(bundledJsFile, 'utf8');
 
-// 将元数据和捆绑的 JS 内容写入最终的油猴脚本文件
-fs.writeFileSync(outputFile, metadataBlock + bundledJsContent);
+// 将元数据、版本注入和捆绑的 JS 内容写入最终的油猴脚本文件
+fs.writeFileSync(outputFile, metadataBlock + versionInjection + bundledJsContent);
 
 console.log('Tampermonkey script generated successfully!');
