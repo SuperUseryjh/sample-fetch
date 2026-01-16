@@ -108,6 +108,7 @@ export function createControlPanelButtonUI(): HTMLElement {
         z-index: 10001;
     `;
     document.body.appendChild(controlBtn);
+    makeDraggable(controlBtn, controlBtn);
     return controlBtn;
 }
 
