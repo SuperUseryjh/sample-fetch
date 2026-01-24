@@ -34,7 +34,7 @@ async function checkUpdate() {
                     const userScriptFileName = 'sampleTester.user.js';
                     const userScriptUrl = `${STATIC_BASE_URL}/${versionPath}/${userScriptFileName}`;
                     if (confirm(`OICPP SampleTester: 发现新版本 ${remoteVersion}！点击确定在新标签页中打开更新。`)) {
-                        window.open(userScriptUrl, '_blank');
+                        window.GM_openInTab(userScriptUrl, false);
                     }
                 } else {
                     console.log('OICPP SampleTester: 当前已是最新版本。');

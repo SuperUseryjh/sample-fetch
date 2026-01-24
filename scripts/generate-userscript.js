@@ -27,10 +27,14 @@ if (metadata.grant) {
     if (!metadata.grant.includes('GM_xmlhttpRequest')) {
         metadataBlock += `// @grant        GM_xmlhttpRequest\n`;
     }
+    if (!metadata.grant.includes('GM_openInTab')) {
+        metadataBlock += `// @grant        GM_openInTab\n`;
+    }
     metadataBlock += `// @grant        ${metadata.grant}\n`;
 } else {
     metadataBlock += `// @grant        GM_info\n`;
     metadataBlock += `// @grant        GM_xmlhttpRequest\n`;
+    metadataBlock += `// @grant        GM_openInTab\n`;
 }
 
 if (metadata.connect && Array.isArray(metadata.connect)) {

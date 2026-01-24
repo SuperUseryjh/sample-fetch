@@ -39,10 +39,12 @@ export interface GuideStep {
     description: string;
 }
 
-// Tampermonkey 的 GM_xmlhttpRequest 类型声明
+// Tampermonkey 的全局函数和变量类型声明
 declare global {
     interface Window {
         GM_xmlhttpRequest: (details: GM_xmlhttpRequestDetails) => void;
+        GM_openInTab: (url: string, open_in_background?: boolean) => Window | null;
+        GM_info: GM_info_interface;
     }
 }
 
@@ -52,7 +54,7 @@ export interface GM_xmlhttpRequestDetails {
     headers?: { [key: string]: string };
     data?: string;
     onload?: (response: GM_xmlhttpRequestResponse) => void;
-    onerror?: (error: GM_xmlhttpRequestResponse) => void;
+    onerror?: (response: GM_xmlhttpRequestResponse) => void; // 确保 onerror 的 response 类型正确
     onabort?: () => void;
     ontimeout?: () => void;
 }
@@ -66,4 +68,50 @@ export interface GM_xmlhttpRequestResponse {
     readyState: number;
     response: any;
     type: "load" | "error" | "abort" | "timeout";
+}
+
+export interface GM_info_interface {
+    script: {
+        name: string;
+        namespace: string;
+        version: string;
+        description: string;
+        author: string;
+        homepage?: string;
+        homepageURL?: string;
+        website?: string;
+        source?: string;
+        icon?: string;
+        icon64?: string;
+        defaulticon?: string;
+        "run-at"?: string;
+        match?: string[];
+        exclude?: string[];
+        include?: string[];
+        require?: string[];
+        resource?: { [key: string]: string };
+        grant?: string[];
+        connect?: string[];
+        noframes?: boolean;
+        unwrap?: boolean;
+        nocompat?: boolean;
+        downloadURL?: string;
+        updateURL?: string;
+        supportURL?: string;
+    };
+    scriptMetaStr: string;
+    scriptWillUpdate: boolean;
+    version: string;
+    injectInto: string;
+    platform: {
+        arch: string;
+        os: string;
+        noFrames: boolean;
+        tlsMin: number;
+        tlsMax: number;
+    };
+    browser: {
+        name: string;
+        version: string;
+    };
 }
