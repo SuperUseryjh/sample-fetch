@@ -21,27 +21,32 @@ async function checkUpdate() {
     const versionPath = isStandardVersion ? 'pub' : 'perv';
     const updateUrl = `${STATIC_BASE_URL}/${versionPath}/version.json`;
 
-    try {
-        const response = await fetch(updateUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const remotePackageJson = await response.json();
-        const remoteVersion = remotePackageJson.version;
+    window.GM_xmlhttpRequest({
+        method: "GET",
+        url: updateUrl,
+        onload: function(response) {
+            try {
+                const remotePackageJson = JSON.parse(response.responseText);
+                const remoteVersion = remotePackageJson.version;
 
-        if (remoteVersion && remoteVersion !== SCRIPT_VERSION) {
-            console.log(`OICPP SampleTester: 发现新版本！当前版本: ${SCRIPT_VERSION}, 最新版本: ${remoteVersion}`);
-            const userScriptFileName = 'sampleTester.user.js';
-            const userScriptUrl = `${STATIC_BASE_URL}/${versionPath}/${userScriptFileName}`;
-            if (confirm(`OICPP SampleTester: 发现新版本 ${remoteVersion}！点击确定在新标签页中打开更新。`)) {
-                window.open(userScriptUrl, '_blank');
+                if (remoteVersion && remoteVersion !== SCRIPT_VERSION) {
+                    console.log(`OICPP SampleTester: 发现新版本！当前版本: ${SCRIPT_VERSION}, 最新版本: ${remoteVersion}`);
+                    const userScriptFileName = 'sampleTester.user.js';
+                    const userScriptUrl = `${STATIC_BASE_URL}/${versionPath}/${userScriptFileName}`;
+                    if (confirm(`OICPP SampleTester: 发现新版本 ${remoteVersion}！点击确定在新标签页中打开更新。`)) {
+                        window.open(userScriptUrl, '_blank');
+                    }
+                } else {
+                    console.log('OICPP SampleTester: 当前已是最新版本。');
+                }
+            } catch (error) {
+                console.error('OICPP SampleTester: 解析更新信息失败:', error);
             }
-        } else {
-            console.log('OICPP SampleTester: 当前已是最新版本。');
+        },
+        onerror: function(response) {
+            console.error('OICPP SampleTester: 检查更新失败:', response.status, response.statusText);
         }
-    } catch (error) {
-        console.error('OICPP SampleTester: 检查更新失败:', error);
-    }
+    });
 }
 
 (function() {

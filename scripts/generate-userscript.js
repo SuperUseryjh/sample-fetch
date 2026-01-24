@@ -24,15 +24,24 @@ if (metadata.grant) {
     if (!metadata.grant.includes('GM_info')) {
         metadataBlock += `// @grant        GM_info\n`;
     }
+    if (!metadata.grant.includes('GM_xmlhttpRequest')) {
+        metadataBlock += `// @grant        GM_xmlhttpRequest\n`;
+    }
     metadataBlock += `// @grant        ${metadata.grant}\n`;
 } else {
     metadataBlock += `// @grant        GM_info\n`;
+    metadataBlock += `// @grant        GM_xmlhttpRequest\n`;
 }
 
 if (metadata.connect && Array.isArray(metadata.connect)) {
+    if (!metadata.connect.includes('onion-static.netlify.app')) {
+        metadataBlock += `// @connect      onion-static.netlify.app\n`;
+    }
     metadata.connect.forEach(item => {
         metadataBlock += `// @connect      ${item}\n`;
     });
+} else {
+    metadataBlock += `// @connect      onion-static.netlify.app\n`;
 }
 
 metadataBlock += '// ==/UserScript==\n';
