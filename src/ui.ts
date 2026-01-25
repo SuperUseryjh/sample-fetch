@@ -179,73 +179,7 @@ function clampButtonPosition(button: HTMLElement, currentRight: number, currentT
     return { right: newRight, top: newTop };
 }
 
-/**
- * 创建并显示题目名称设置面板。
- */
-export function createProblemNameSettingsPanel() {
-    let panel = document.getElementById('problemNameSettingsPanel');
-    if (panel) {
-        panel.remove(); // 移除旧面板以防止重复
-    }
 
-    panel = document.createElement('div');
-    panel.id = 'problemNameSettingsPanel';
-    panel.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #fff;
-        border: 1px solid #007bff;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        padding: 20px;
-        z-index: 2147483647;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: 300px;
-        max-width: 90vw;
-    `;
-
-    panel.innerHTML = `
-        <h4 style="margin: 0; font-size: 18px; color: #007bff; text-align: center;">题目名称设置</h4>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <label style="display: flex; align-items: center; gap: 8px;">
-                <input type="radio" name="problemNameMode" value="default" id="problemNameModeDefault">
-                默认 (使用网页标题)
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px;">
-                <input type="radio" name="problemNameMode" value="custom" id="problemNameModeCustom">
-                自定义 (每次抓取时输入)
-            </label>
-        </div>
-        <button id="saveProblemNameSettingsBtn" style="padding: 10px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold;">保存</button>
-    `;
-
-    document.body.appendChild(panel);
-
-    // 加载保存的设置
-    const savedMode = localStorage.getItem(PROBLEM_NAME_MODE_KEY) || 'default';
-    const defaultRadio = panel.querySelector<HTMLInputElement>('#problemNameModeDefault');
-    const customRadio = panel.querySelector<HTMLInputElement>('#problemNameModeCustom');
-
-    if (savedMode === 'default') {
-        defaultRadio!.checked = true;
-    } else {
-        customRadio!.checked = true;
-    }
-
-    // 保存按钮事件
-    panel.querySelector<HTMLButtonElement>('#saveProblemNameSettingsBtn')!.addEventListener('click', () => {
-        const selectedMode = (document.querySelector('input[name="problemNameMode"]:checked') as HTMLInputElement).value;
-        localStorage.setItem(PROBLEM_NAME_MODE_KEY, selectedMode);
-        showCustomDialog('设置已保存！');
-        panel!.remove();
-    });
-}
 
 /**
  * 显示一个自定义的 HTML 弹窗，可以包含消息和可选的输入框。
@@ -522,7 +456,7 @@ export function initializeUI() {
 
     // 创建并设置控制按钮
     const controlBtn = createControlPanelButtonUI();
-    controlBtn.addEventListener('click', createProblemNameSettingsPanel);
+    controlBtn.addEventListener('click', () => { window.location.href = window.location.origin + '/oicpp-settings'; });
 
     let panel = document.getElementById(PANEL_ID);
     let toggleBtn = document.getElementById(TOGGLE_BTN_ID);

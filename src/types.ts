@@ -45,6 +45,8 @@ declare global {
         GM_xmlhttpRequest: (details: GM_xmlhttpRequestDetails) => void;
         GM_openInTab: (url: string, open_in_background?: boolean) => Window | null;
         GM_info: GM_info_interface;
+    GM_setValue: (name: string, value: any) => Promise<void>;
+        GM_getValue: (name: string, defaultValue?: any) => Promise<any>;
     }
 }
 
