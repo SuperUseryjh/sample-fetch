@@ -17,7 +17,7 @@ export const PROBLEM_NAME_MODE_KEY = 'fetchProblemNameMode';
 export const PROBLEM_NAME_CUSTOM_INPUT_KEY = 'fetchProblemNameCustomInput';
 
 // 更新检测常量
-export const STATIC_BASE_URL = 'https://onion-static.netlify.app/oicpp';
+export const STATIC_BASE_URL = 'https://static.yaoonion.fun/oicpp';
 export const LOCAL_STORAGE_LAST_CHECK_TIME = 'fetchProblemLastUpdateCheck';
 export const UPDATE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24小时
 export const PREVIEW_UPDATE_CHECK_INTERVAL = 1 * 60 * 60 * 1000; // 1小时
