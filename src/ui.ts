@@ -1,4 +1,4 @@
-import { PANEL_ID, TOGGLE_BTN_ID, TEMP_STATUS_ID, STATE_SELECTION_PANEL_ID, LOCAL_STORAGE_POS_X, LOCAL_STORAGE_POS_Y, GUIDE_STORAGE_KEY, CONTROL_BTN_ID, PROBLEM_NAME_MODE_KEY, PROBLEM_NAME_CUSTOM_INPUT_KEY } from './constants';
+import { PANEL_ID, TOGGLE_BTN_ID, TEMP_STATUS_ID, STATE_SELECTION_PANEL_ID, LOCAL_STORAGE_POS_X, LOCAL_STORAGE_POS_Y, GUIDE_MAIN_PAGE_STORAGE_KEY, CONTROL_BTN_ID, PROBLEM_NAME_MODE_KEY, PROBLEM_NAME_CUSTOM_INPUT_KEY } from './constants';
 import { DomainConfig } from './types';
 import { makeDraggable } from './utils';
 import { getProblemName } from './domSelectors';
@@ -448,7 +448,7 @@ export function populatePanelFields(panel: HTMLElement, config: DomainConfig) {
 /**
  * 初始化UI和事件监听器。
  */
-export function initializeUI() {
+export async function initializeUI() {
     console.log('OICPP SampleTester: initializeUI - 正在初始化UI。');
     const hostname = window.location.hostname;
     const config = domainConfigs[hostname];
@@ -877,9 +877,10 @@ export function initializeUI() {
     }
 
     // 如果之前未显示过指引，则启动指引
-    if (localStorage.getItem(GUIDE_STORAGE_KEY) !== 'true') {
+    const guideShown = await window.GM_getValue(GUIDE_MAIN_PAGE_STORAGE_KEY, false);
+    if (!guideShown) {
         console.log('OICPP SampleTester: initializeUI - 指引未显示过，正在启动指引。');
-        startGuide();
+        startGuide(false, GUIDE_MAIN_PAGE_STORAGE_KEY);
     } else {
         console.log('OICPP SampleTester: initializeUI - 指引已显示。');
     }

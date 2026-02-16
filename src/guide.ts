@@ -1,4 +1,4 @@
-import { GUIDE_POPOVER_ID, GUIDE_OVERLAY_ID, GUIDE_STORAGE_KEY, TOGGLE_BTN_ID } from './constants';
+import { GUIDE_POPOVER_ID, GUIDE_OVERLAY_ID, GUIDE_MAIN_PAGE_STORAGE_KEY, TOGGLE_BTN_ID } from './constants';
 import { guideSteps } from './guideSteps';
 
 let currentGuideStep = 0;
@@ -97,12 +97,13 @@ export function positionPopover(popover: HTMLElement, targetElement: HTMLElement
 }
 
 /**
- * 显示特定的指引步骤��
+ * 显示特定的指引步骤
  * @param {number} stepIndex - 要显示的步骤索引。
+ * @param {string} storageKey - 用于存储指引状态的键。
  */
-export function showGuideStep(stepIndex: number) {
+export function showGuideStep(stepIndex: number, storageKey: string) {
     if (stepIndex >= guideSteps.length) {
-        skipGuide();
+        skipGuide(storageKey);
         return;
     }
 
@@ -112,7 +113,7 @@ export function showGuideStep(stepIndex: number) {
 
     if (!targetElement) {
         console.warn(`指引: 未找到步骤 ${stepIndex} 的目标元素: ${step.selector}`);
-        nextGuideStep(); // 如果未找到元素，则跳过此步骤
+        nextGuideStep(storageKey); // 如果未找到元素，则跳过此步骤
         return;
     }
 
@@ -144,11 +145,11 @@ export function showGuideStep(stepIndex: number) {
         const skipBtn = popover.querySelector('#guideSkipBtn');
 
         // 移除现有监听器以防止重复
-        nextBtn?.removeEventListener('click', nextGuideStep);
-        skipBtn?.removeEventListener('click', skipGuide);
+        nextBtn?.removeEventListener('click', () => nextGuideStep(storageKey));
+        skipBtn?.removeEventListener('click', () => skipGuide(storageKey));
 
-        nextBtn?.addEventListener('click', nextGuideStep);
-        skipBtn?.addEventListener('click', skipGuide);
+        nextBtn?.addEventListener('click', () => nextGuideStep(storageKey));
+        skipBtn?.addEventListener('click', () => skipGuide(storageKey));
 
         // 更新按钮文本
         if (currentGuideStep === guideSteps.length - 1) {
@@ -161,38 +162,49 @@ export function showGuideStep(stepIndex: number) {
 
 /**
  * 前进到下一个指引步骤。
+ * @param {string} storageKey - 用于存储指引状态的键。
  */
-export function nextGuideStep() {
+export function nextGuideStep(storageKey: string) {
     currentGuideStep++;
-    showGuideStep(currentGuideStep);
+    showGuideStep(currentGuideStep, storageKey);
 }
 
 /**
  * 隐藏指引并标记为已显示。
+ * @param {string} storageKey - 用于存储指引状态的键。
  */
-export function skipGuide() {
+export async function skipGuide(storageKey: string) {
     const popover = document.getElementById(GUIDE_POPOVER_ID);
     const overlay = document.getElementById(GUIDE_OVERLAY_ID);
     if (popover) popover.style.display = 'none';
     if (overlay) overlay.style.display = 'none';
-    localStorage.setItem(GUIDE_STORAGE_KEY, 'true');
+    await window.GM_setValue(storageKey, true);
 }
 
 /**
  * 启动交互式指引。
+ * @param {boolean} forceShow - 如果为 true，则强制显示指引，不检查存储键和不弹出确认框。
+ * @param {string} storageKey - 用于存储指引状态的键。
  */
-export function startGuide() {
-    if (localStorage.getItem(GUIDE_STORAGE_KEY) === 'true') {
-        return; // 指引已显示
+export async function startGuide(forceShow: boolean = false, storageKey: string = GUIDE_MAIN_PAGE_STORAGE_KEY) {
+    const guideShown = await window.GM_getValue(storageKey, false);
+    console.log(`OICPP SampleTester: Guide - storageKey: ${storageKey}, guideShown: ${guideShown}`);
+
+    if (guideShown) {
+        return; // 指引已显示，直接返回
     }
 
-    const shouldShowGuide = confirm('貌似你是第一次使用 OICPP 样例抓取呢，要看看新手教程吗');
-
-    if (shouldShowGuide) {
-        // 创建弹出框，但暂不附加监听器
-        createGuidePopover(); // 确保弹出框存在，以便 showGuideStep 找到它
-        showGuideStep(0);
-    } else {
-        skipGuide(); // 用户选择不看指引
+    let shouldShowGuide = true; // 默认显示指引
+    if (!forceShow) {
+        shouldShowGuide = confirm('貌似你是第一次使用 OICPP 样例抓取呢，要看看新手教程吗');
     }
+
+    if (!shouldShowGuide) {
+        await skipGuide(storageKey); // 用户选择不看指引
+        return;
+    }
+
+    // 创建弹出框，但暂不附加监听器
+    createGuidePopover(); // 确保弹出框存在，以便 showGuideStep 找到它
+    showGuideStep(0, storageKey);
 }

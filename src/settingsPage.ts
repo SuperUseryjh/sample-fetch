@@ -1,8 +1,7 @@
-import { PROBLEM_NAME_MODE_KEY } from './constants';
+import { PROBLEM_NAME_MODE_KEY, GUIDE_SETTINGS_PAGE_STORAGE_KEY } from './constants';
 import { showCustomDialog } from './ui';
 import { domainConfigs } from './domainConfig'; // 导入 domainConfigs
-
-
+import { startGuide } from './guide'; // 导入 startGuide 函数
 
 const DYNAMIC_CONFIGS_STORAGE_KEY = 'oicpp_dynamic_configs'; // 全局存储动态配置的键
 
@@ -210,4 +209,8 @@ export function renderSettingsPage() {
 
     // 初始渲染动态域名列表
     renderDynamicDomainList();
+
+    // 在设置页面加载完成后显示新手教程
+    console.log('OICPP SampleTester: Settings Page Guide - Calling startGuide with storageKey:', GUIDE_SETTINGS_PAGE_STORAGE_KEY);
+    startGuide(true, GUIDE_SETTINGS_PAGE_STORAGE_KEY);
 }

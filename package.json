@@ -1,6 +1,6 @@
 {
   "name": "oicpp-sample-tester",
-  "version": "1.2.4-alpha4",
+  "version": "1.2.4-alpha6",
   "description": "从 OJ 平台获取题目样例并发送到 OICPP 的油猴脚本",
   "main": "dist/fetch_tampermonkey.user.js",
   "userscript": {
@@ -22,7 +22,8 @@
       "http://127.0.0.1:20030",
       "127.0.0.1",
       "onion-static.netlify.app"
-    ]
+    ],
+    "debug": true
   },
   "scripts": {
     "build": "tsc && node scripts/bundle.js && node scripts/generate-userscript.js",
