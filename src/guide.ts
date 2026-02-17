@@ -1,5 +1,6 @@
 import { GUIDE_POPOVER_ID, GUIDE_OVERLAY_ID, GUIDE_MAIN_PAGE_STORAGE_KEY, TOGGLE_BTN_ID } from './constants';
 import { guideSteps } from './guideSteps';
+import { showCustomDialog } from './ui';
 
 let currentGuideStep = 0;
 
@@ -196,7 +197,8 @@ export async function startGuide(forceShow: boolean = false, storageKey: string 
 
     let shouldShowGuide = true; // 默认显示指引
     if (!forceShow) {
-        shouldShowGuide = confirm('貌似你是第一次使用 OICPP 样例抓取呢，要看看新手教程吗');
+        const result = await showCustomDialog('貌似你是第一次使用 OICPP 样例抓取呢，要看看新手教程吗', '', false, '', true);
+        shouldShowGuide = result === 'ok';
     }
 
     if (!shouldShowGuide) {

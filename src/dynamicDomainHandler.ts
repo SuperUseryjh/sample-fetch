@@ -1,6 +1,6 @@
 import { domainConfigs } from './domainConfig';
 import { renderSettingsPage } from './settingsPage';
-
+import { showCustomDialog } from './ui';
 
 
 const DYNAMIC_CONFIGS_STORAGE_KEY = 'oicpp_dynamic_configs'; // 全局存储动态配置的键
@@ -26,21 +26,21 @@ export async function handleDynamicDomainConfig(): Promise<boolean> {
 
                 // 检查是否已存在
                 if (currentDynamicConfigs.some((item: { domain: string }) => item.domain === currentHostname)) {
-                    alert(`域名 ${currentHostname} 已存在，请勿重复添加。`);
+                    showCustomDialog(`域名 ${currentHostname} 已存在，请勿重复添加。`);
                 } else {
                     currentDynamicConfigs.push({
                         domain: currentHostname,
                         ojTemplateKey: ojParam
                     });
                     await window.GM_setValue(DYNAMIC_CONFIGS_STORAGE_KEY, currentDynamicConfigs);
-                    alert(`已将当前域名 ${currentHostname} 添加到 OICPP 脚本范围，并使用 ${ojParam} 的配置。`);
+                    showCustomDialog(`已将当前域名 ${currentHostname} 添加到 OICPP 脚本范围，并使用 ${ojParam} 的配置。`);
                 }
 
                 // 重定向到不带参数的设置页面
                 window.location.href = window.location.origin + '/oicpp-settings';
                 return true; // 已处理动态配置并重定向
             } else {
-                alert(`未找到名为 ${ojParam} 的 OJ 配置。`);
+                showCustomDialog(`未找到名为 ${ojParam} 的 OJ 配置。`);
             }
         }
         renderSettingsPage();

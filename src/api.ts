@@ -1,5 +1,6 @@
 import { API_URL } from './constants';
 import { Payload, GM_xmlhttpRequestDetails, GM_xmlhttpRequestResponse } from './types';
+import { showCustomDialog } from './ui';
 
 /**
  * 将数据发送到本地API。
@@ -31,20 +32,20 @@ export function sendProblemToAPI(payload: Payload, statusMessageElement: HTMLEle
                     if (data.invalidField) {
                         errorMessage += ` (字段: ${data.invalidField})`;
                     }
-                    alert(errorMessage);
+                    showCustomDialog(errorMessage);
                     statusMessageElement.style.color = 'red';
                     statusMessageElement.textContent = errorMessage;
                     console.error('OICPP SampleTester: sendProblemToAPI - API错误:', errorMessage, '数据:', data);
                 }
             } catch (e: any) {
-                alert(`请求成功，但解析响应失败: ${e.message}`);
+                showCustomDialog(`请求成功，但解析响应失败: ${e.message}`);
                 statusMessageElement.style.color = 'red';
                 statusMessageElement.textContent = `请求成功，但解析响应失败: ${e.message}`;
                 console.error('OICPP SampleTester: sendProblemToAPI - JSON解析错误:', e.message, '响应文本:', response.responseText);
             }
         },
         onerror: function(error: GM_xmlhttpRequestResponse) {
-            alert(`请求失败: ${error.statusText || error.responseText || '网络错误'}。请确认OICPP是否正在运行。`);
+            showCustomDialog(`请求失败: ${error.statusText || error.responseText || '网络错误'}。请确认OICPP是否正在运行。`);
             statusMessageElement.style.color = 'red';
             statusMessageElement.textContent = `请求失败: ${error.statusText || error.responseText || '网络错误'}。请确认OICPP是否正在运行。`;
             console.error('OICPP SampleTester: GM_xmlhttpRequest 错误:', error);

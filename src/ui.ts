@@ -189,7 +189,7 @@ function clampButtonPosition(button: HTMLElement, currentRight: number, currentT
  * @param {string} [inputPlaceholder=''] - 输入框的占位符文本。
  * @returns {Promise<string | null>} 如果有输入框，返回用户输入的值；否则返回 'ok' 或 null（如果用户取消）。
  */
-export function showCustomDialog(message: string, inputValue: string = '', showInput: boolean = false, inputPlaceholder: string = ''): Promise<string | null> {
+export function showCustomDialog(message: string, inputValue: string = '', showInput: boolean = false, inputPlaceholder: string = '', showCancelButton: boolean = false): Promise<string | null> {
     return new Promise((resolve) => {
         let dialogOverlay = document.getElementById('customDialogOverlay');
         if (!dialogOverlay) {
@@ -229,7 +229,7 @@ export function showCustomDialog(message: string, inputValue: string = '', showI
             ${showInput ? `<input type="text" id="customDialogInput" value="${inputValue}" placeholder="${inputPlaceholder}" style="width: calc(100% - 20px); padding: 8px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;">` : ''}
             <div style="display: flex; justify-content: center; gap: 10px;">
                 <button id="customDialogOkBtn" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">确定</button>
-                ${showInput ? `<button id="customDialogCancelBtn" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>` : ''}
+                ${showCancelButton || showInput ? `<button id="customDialogCancelBtn" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>` : ''}
             </div>
         `;
 
@@ -261,7 +261,7 @@ export function showCustomDialog(message: string, inputValue: string = '', showI
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 okBtn?.click();
-            } else if (e.key === 'Escape') {
+            } else if (e.key === 'Escape' && cancelBtn) {
                 cancelBtn?.click();
             }
         }, { once: true }); // 只监听一次，避免重复触发

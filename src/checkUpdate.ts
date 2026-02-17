@@ -1,4 +1,5 @@
 import { STATIC_BASE_URL, LOCAL_STORAGE_LAST_CHECK_TIME, UPDATE_CHECK_INTERVAL, PREVIEW_UPDATE_CHECK_INTERVAL } from './constants';
+import { showCustomDialog } from './ui';
 
 export async function checkUpdate() {
     const currentScriptVersion = window.GM_info.script.version; // 从 GM_info 获取当前脚本版本
@@ -22,7 +23,7 @@ export async function checkUpdate() {
     window.GM_xmlhttpRequest({
         method: "GET",
         url: updateUrl,
-        onload: function(response) {
+        onload: async function(response) {
             try {
                 const remotePackageJson = JSON.parse(response.responseText);
                 const remoteVersion = remotePackageJson.version;
@@ -31,7 +32,7 @@ export async function checkUpdate() {
                     console.log(`OICPP SampleTester: 发现新版本！当前版本: ${currentScriptVersion}, 最新版本: ${remoteVersion}`);
                     const userScriptFileName = 'sampleTester.user.js';
                     const userScriptUrl = `${STATIC_BASE_URL}/${versionPath}/${userScriptFileName}`;
-                    if (confirm(`OICPP SampleTester: 发现新版本 ${remoteVersion}！点击确定在新标签页中打开更新。`)) {
+                    if (await showCustomDialog(`OICPP SampleTester: 发现新版本 ${remoteVersion}！点击确定在新标签页中打开更新。`, '', false, '', true) === 'ok') {
                         window.GM_openInTab(userScriptUrl, false);
                     }
                 } else {

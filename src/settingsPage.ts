@@ -150,7 +150,7 @@ export function renderSettingsPage() {
             button.addEventListener('click', async (event) => {
                 const targetButton = event.target as HTMLButtonElement;
                 const domainToRemove = targetButton.dataset.domain;
-                if (domainToRemove && confirm(`确定要移除域名 ${domainToRemove} 吗？`)) {
+                if (domainToRemove && await showCustomDialog(`确定要移除域名 ${domainToRemove} 吗？`, '', false, '', true) === 'ok') {
                     let currentDynamicConfigs = await window.GM_getValue(DYNAMIC_CONFIGS_STORAGE_KEY, []);
                     currentDynamicConfigs = currentDynamicConfigs.filter((item: { domain: string }) => item.domain !== domainToRemove);
                     await window.GM_setValue(DYNAMIC_CONFIGS_STORAGE_KEY, currentDynamicConfigs);
