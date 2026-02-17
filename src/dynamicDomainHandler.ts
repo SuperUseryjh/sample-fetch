@@ -16,7 +16,7 @@ export async function handleDynamicDomainConfig(): Promise<boolean> {
     const enableParam = urlParams.get('enable');
     const ojParam = urlParams.get('oj');
 
-    if (window.location.pathname === '/oicpp-settings') {
+    if (window.location.pathname.endsWith('/oicpp-settings') || window.location.pathname.endsWith('/oicpp-settings/')) {
         if (enableParam === '1' && ojParam) {
             const currentHostname = window.location.hostname;
             const configToCopy = domainConfigs[ojParam];
