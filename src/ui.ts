@@ -7,7 +7,7 @@ import { domainConfigs } from './domainConfig';
 import { startGuide } from './guide';
 
 // 定义所有 setupXxxButton 函数的类型
-type SetupButtonFunction = (state: 'fixed' | 'floating') => void;
+type SetupButtonFunction = () => void;
 
 /**
  * 创建主面板UI。
@@ -379,33 +379,17 @@ export function createStateSelectionPanel(
 
     const hostname = window.location.hostname;
 
-    const setupButtonState = (state: 'fixed' | 'floating') => {
+    const setupButtonState = () => {
         if (hostname === 'htoj.com.cn') {
-            setupHtojButton(state);
+            setupHtojButton();
         } else if (hostname === 'www.luogu.com.cn' || hostname === 'luogu.com.cn') {
-            setupLuoguButton(state);
+            setupLuoguButton();
         } else if (hostname === 'atcoder.jp') {
-            setupAtcoderButton(state);
+            setupAtcoderButton();
         } else if (hostname === 'codeforces.com') {
-            setupCodeforcesButton(state);
+            setupCodeforcesButton();
         }
     };
-
-    const fixedBtn = document.createElement('button');
-    fixedBtn.textContent = '切换到固定状态';
-    fixedBtn.style.cssText = `
-        background-color: #28a745;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-    `;
-    fixedBtn.addEventListener('click', () => {
-        localStorage.setItem(config.buttonStateKey, 'fixed');
-        setupButtonState('fixed');
-        panel!.remove();
-    });
 
     const floatingBtn = document.createElement('button');
     floatingBtn.textContent = '切换到悬浮状态';
@@ -419,11 +403,10 @@ export function createStateSelectionPanel(
     `;
     floatingBtn.addEventListener('click', () => {
         localStorage.setItem(config.buttonStateKey, 'floating');
-        setupButtonState('floating');
+        setupButtonState(); // 移除参数
         panel!.remove();
     });
 
-    panel.appendChild(fixedBtn);
     panel.appendChild(floatingBtn);
     document.body.appendChild(panel);
 
@@ -528,19 +511,14 @@ export function initializeUI() {
     let toggleBtn = document.getElementById(TOGGLE_BTN_ID);
 
     // 定义所有 setupXxxButton 函数
-    const setupHtojButton: SetupButtonFunction = (state) => {
+    const setupHtojButton: SetupButtonFunction = () => {
         // Remove existing button if any
         let existingBtn = document.getElementById(TOGGLE_BTN_ID);
         if (existingBtn) {
             existingBtn.remove();
         }
 
-        let toggleBtn: HTMLElement; // Explicitly declare as HTMLElement
-
-        if (state === 'fixed') {
-            console.log('OICPP SampleTester: initializeUI - HTOJ 按钮 (固定) 已停用，切换到悬浮按钮。');
-        }
-        toggleBtn = createToggleButtonUI();
+        const toggleBtn = createToggleButtonUI();
         const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
         const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
         if (savedRight !== null && savedTop !== null) {
@@ -573,332 +551,123 @@ export function initializeUI() {
         console.log('OICPP SampleTester: initializeUI - HTOJ 按钮 (悬浮) 已插入。');
     };
 
-    const setupLuoguButton: SetupButtonFunction = (state) => {
+    const setupLuoguButton: SetupButtonFunction = () => {
         // Remove existing button if any
         let existingBtn = document.getElementById(TOGGLE_BTN_ID);
         if (existingBtn) {
             existingBtn.remove();
         }
 
-        let toggleBtn: HTMLElement; // Explicitly declare as HTMLElement
-
-        if (state === 'fixed') {
-            const findAndInsertFixedButton = () => {
-                let targetElement = document.querySelector('div.nav-search');
-                if (targetElement) {
-                    const parentDiv = targetElement.parentElement;
-                    if (parentDiv) {
-                        parentDiv.style.display = 'flex';
-                        parentDiv.style.alignItems = 'center';
-
-                        toggleBtn = document.createElement('button');
-                        toggleBtn.id = TOGGLE_BTN_ID;
-                        toggleBtn.innerHTML = '发送至 OICPP <span id="cooldownCountdown" style="display:none; margin-left: 5px;"></span>';
-                        toggleBtn.title = '抓取样例并发送到 OICPP';
-                        toggleBtn.style.cssText = `
-                            background-color: #007bff;
-                            color: white;
-                            border: none;
-                            padding: 8px 10px;
-                            border-radius: 4px;
-                            z-index: 10001;
-                            cursor: pointer;
-                            font-size: 18px;
-                            line-height: 1;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            margin-right: 10px;
-                        `;
-                        targetElement.before(toggleBtn);
-                        console.log('OICPP SampleTester: initializeUI - Luogu 按钮 (固定) 已插入。');
-
-                        toggleBtn.addEventListener('click', (e) => {
-                            if (e.ctrlKey) {
-                                e.preventDefault(); // Prevent default click action
-                                createStateSelectionPanel(toggleBtn!, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
-                            } else {
-                                handleToggleButtonClick(config);
-                            }
-                        });
-                        return true; // Button inserted
-                    }
-                }
-                return false; // Button not inserted
-            };
-
-            if (!findAndInsertFixedButton()) {
-                const observer = new MutationObserver((mutations, obs) => {
-                    console.log('OICPP SampleTester: MutationObserver - DOM 变化检测 (Luogu 固定状态)。');
-                    if (findAndInsertFixedButton()) {
-                        obs.disconnect(); // Button inserted, stop observing
-                    }
-                    else {
-                        console.log('OICPP SampleTester: initializeUI - 仍在等待 Luogu 目标元素 (固定状态)...');
-                    }
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
-            }
-        } else { // floating state
-            toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
-            // Load position from localStorage
-            const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
-            const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
-            if (savedRight !== null && savedTop !== null) {
-                toggleBtn.style.right = `${parseFloat(savedRight)}px`;
-                toggleBtn.style.top = `${parseFloat(savedTop)}px`;
-                console.log(`OICPP SampleTester: 已加载按钮位置 (Luogu 悬浮): right=${savedRight}, top=${savedTop}`);
-            } else {
-                toggleBtn.style.right = '10px';
-                toggleBtn.style.top = '10px';
-                console.log('OICPP SampleTester: 已设置默认按钮位置 (Luogu 悬浮)。');
-            }
-            const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
-            toggleBtn.addEventListener('click', (e) => {
-                if (e.ctrlKey) {
-                    e.preventDefault(); // Prevent default click action
-                    createStateSelectionPanel(toggleBtn, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
-                } else if (toggleBtnDraggable.getIsMoved()) {
-                    e.preventDefault();
-                    console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件 (Luogu)。');
-                }
-                else {
-                    handleToggleButtonClick(config);
-                }
-            });
-            console.log('OICPP SampleTester: initializeUI - Luogu 按钮 (悬浮) 已插入。');
+        const toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
+        // Load position from localStorage
+        const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
+        const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
+        if (savedRight !== null && savedTop !== null) {
+            toggleBtn.style.right = `${parseFloat(savedRight)}px`;
+            toggleBtn.style.top = `${parseFloat(savedTop)}px`;
+            console.log(`OICPP SampleTester: 已加载按钮位置 (Luogu 悬浮): right=${savedRight}, top=${savedTop}`);
+        } else {
+            toggleBtn.style.right = '10px';
+            toggleBtn.style.top = '10px';
+            console.log('OICPP SampleTester: 已设置默认按钮位置 (Luogu 悬浮)。');
         }
+        const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
+        toggleBtn.addEventListener('click', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault(); // Prevent default click action
+                createStateSelectionPanel(toggleBtn, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
+            } else if (toggleBtnDraggable.getIsMoved()) {
+                e.preventDefault();
+                console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件 (Luogu)。');
+            }
+            else {
+                handleToggleButtonClick(config);
+            }
+        });
+        console.log('OICPP SampleTester: initializeUI - Luogu 按钮 (悬浮) 已插入。');
     };
 
-    const setupAtcoderButton: SetupButtonFunction = (state) => {
+    const setupAtcoderButton: SetupButtonFunction = () => {
         // Remove existing button if any
         let existingBtn = document.getElementById(TOGGLE_BTN_ID);
         if (existingBtn) {
             existingBtn.remove();
         }
 
-        let toggleBtn: HTMLElement; // Explicitly declare as HTMLElement
-
-        if (state === 'fixed') {
-            const findAndInsertFixedButton = () => {
-                let targetElement = document.querySelector('li.dropdown'); // Changed selector
-                if (targetElement) {
-                    const parentDiv = targetElement.parentElement;
-                    if (parentDiv) {
-                        parentDiv.style.display = 'flex';
-                        parentDiv.style.alignItems = 'center';
-
-                        toggleBtn = document.createElement('button');
-                        toggleBtn.id = TOGGLE_BTN_ID;
-                        toggleBtn.innerHTML = '发送至 OICPP <span id="cooldownCountdown" style="display:none; margin-left: 5px;"></span>';
-                        toggleBtn.title = '抓取样例并发送到 OICPP';
-                        toggleBtn.style.cssText = `
-                            background-color: #007bff;
-                            color: white;
-                            border: none;
-                            padding: 8px 10px;
-                            border-radius: 4px;
-                            z-index: 10001;
-                            cursor: pointer;
-                            font-size: 18px;
-                            line-height: 1;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            margin-right: 10px;
-                        `;
-                        targetElement.before(toggleBtn);
-                        console.log('OICPP SampleTester: initializeUI - Atcoder 按钮 (固定) 已插入。');
-
-                        toggleBtn.addEventListener('click', (e) => {
-                            if (e.ctrlKey) {
-                                e.preventDefault(); // Prevent default click action
-                                createStateSelectionPanel(toggleBtn!, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
-                            } else {
-                                handleToggleButtonClick(config);
-                            }
-                        });
-                        return true; // Button inserted
-                    }
-                }
-                return false; // Button not inserted
-            };
-
-            if (!findAndInsertFixedButton()) {
-                const observer = new MutationObserver((mutations, obs) => {
-                    console.log('OICPP SampleTester: MutationObserver - DOM 变化检测 (Atcoder 固定状态)。');
-                    if (findAndInsertFixedButton()) {
-                        obs.disconnect(); // Button inserted, stop observing
-                    }
-                    else {
-                        console.log('OICPP SampleTester: initializeUI - 仍在等待 Atcoder 目标元素 (固定状态)...');
-                    }
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
-            }
-        } else { // floating state
-            toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
-            // Load position from localStorage
-            const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
-            const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
-            if (savedRight !== null && savedTop !== null) {
-                toggleBtn.style.right = `${parseFloat(savedRight)}px`;
-                toggleBtn.style.top = `${parseFloat(savedTop)}px`;
-                console.log(`OICPP SampleTester: 已加载按钮位置 (Atcoder 悬浮): right=${savedRight}, top=${savedTop}`);
-            } else {
-                toggleBtn.style.right = '10px';
-                toggleBtn.style.top = '10px';
-                console.log('OICPP SampleTester: 已设置默认按钮位置 (悬浮)。');
-            }
-            const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
-            toggleBtn.addEventListener('click', (e) => {
-                if (e.ctrlKey) {
-                    e.preventDefault(); // Prevent default click action
-                    createStateSelectionPanel(toggleBtn, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
-                } else if (toggleBtnDraggable.getIsMoved()) {
-                    e.preventDefault();
-                    console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件 (Atcoder)。');
-                }
-                else {
-                    handleToggleButtonClick(config);
-                }
-            });
-            console.log('OICPP SampleTester: initializeUI - Atcoder 按钮 (悬浮) 已插入。');
+        const toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
+        // Load position from localStorage
+        const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
+        const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
+        if (savedRight !== null && savedTop !== null) {
+            toggleBtn.style.right = `${parseFloat(savedRight)}px`;
+            toggleBtn.style.top = `${parseFloat(savedTop)}px`;
+            console.log(`OICPP SampleTester: 已加载按钮位置 (Atcoder 悬浮): right=${savedRight}, top=${savedTop}`);
+        } else {
+            toggleBtn.style.right = '10px';
+            toggleBtn.style.top = '10px';
+            console.log('OICPP SampleTester: 已设置默认按钮位置 (悬浮)。');
         }
+        const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
+        toggleBtn.addEventListener('click', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault(); // Prevent default click action
+                createStateSelectionPanel(toggleBtn, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
+            } else if (toggleBtnDraggable.getIsMoved()) {
+                e.preventDefault();
+                console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件 (Atcoder)。');
+            }
+            else {
+                handleToggleButtonClick(config);
+            }
+        });
+        console.log('OICPP SampleTester: initializeUI - Atcoder 按钮 (悬浮) 已插入。');
     };
 
-    const setupCodeforcesButton: SetupButtonFunction = (state) => {
+    const setupCodeforcesButton: SetupButtonFunction = () => {
         // Remove existing button if any
         let existingBtn = document.getElementById(TOGGLE_BTN_ID);
         if (existingBtn) {
             existingBtn.remove();
         }
 
-        let toggleBtn: HTMLElement; // Explicitly declare as HTMLElement
-
-        if (state === 'fixed') {
-            const findAndInsertFixedButton = () => {
-                let targetElement = document.querySelector('div.lang-chooser');
-                if (targetElement) {
-                    const parentDiv = targetElement.parentElement;
-                    if (parentDiv) {
-                        parentDiv.style.display = 'flex';
-                        parentDiv.style.alignItems = 'center';
-
-                        toggleBtn = document.createElement('button');
-                        toggleBtn.id = TOGGLE_BTN_ID;
-                        toggleBtn.innerHTML = '发送至 OICPP <span id="cooldownCountdown" style="display:none; margin-left: 5px;"></span>';
-                        toggleBtn.title = '抓取样例并发送到 OICPP';
-                        toggleBtn.style.cssText = `
-                            background-color: #007bff;
-                            color: white;
-                            border: none;
-                            padding: 8px 10px;
-                            border-radius: 4px;
-                            z-index: 10001;
-                            cursor: pointer;
-                            font-size: 18px;
-                            line-height: 1;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            margin-right: 10px;
-                        `;
-                        const buttonWrapper = document.createElement('div');
-                        buttonWrapper.style.cssText = `
-                            display: inline-block;
-                            margin-right: 10px;
-                        `;
-                        buttonWrapper.appendChild(toggleBtn);
-                        targetElement.prepend(buttonWrapper);
-                        console.log('OICPP SampleTester: initializeUI - Codeforces 按钮 (固定) 已插入。');
-
-                        toggleBtn.addEventListener('click', (e) => {
-                            if (e.ctrlKey) {
-                                e.preventDefault(); // Prevent default click action
-                                createStateSelectionPanel(toggleBtn!, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
-                            } else {
-                                handleToggleButtonClick(config);
-                            }
-                        });
-                        return true; // Button inserted
-                    }
-                }
-                return false; // Button not inserted
-            };
-
-            if (!findAndInsertFixedButton()) {
-                const observer = new MutationObserver((mutations, obs) => {
-                    console.log('OICPP SampleTester: MutationObserver - DOM 变化检测 (Codeforces 固定状态)。');
-                    if (findAndInsertFixedButton()) {
-                        obs.disconnect(); // Button inserted, stop observing
-                    }
-                    else {
-                        console.log('OICPP SampleTester: initializeUI - 仍在等待 Codeforces 目标元素 (固定状态)...');
-                    }
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
-            }
-        } else { // floating state
-            toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
-            // Load position from localStorage
-            const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
-            const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
-            if (savedRight !== null && savedTop !== null) {
-                toggleBtn.style.right = `${parseFloat(savedRight)}px`;
-                toggleBtn.style.top = `${parseFloat(savedTop)}px`;
-                console.log(`OICPP SampleTester: 已加载按钮位置 (Codeforces 悬浮): right=${savedRight}, top=${savedTop}`);
-            } else {
-                toggleBtn.style.right = '10px';
-                toggleBtn.style.top = '10px';
-                console.log('OICPP SampleTester: 已设置默认按钮位置 (悬浮)。');
-            }
-            const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
-            toggleBtn.addEventListener('click', (e) => {
-                if (e.ctrlKey) {
-                    e.preventDefault(); // Prevent default click action
-                    createStateSelectionPanel(toggleBtn, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
-                } else if (toggleBtnDraggable.getIsMoved()) {
-                    e.preventDefault();
-                    console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件 (Codeforces)。');
-                }
-                else {
-                    handleToggleButtonClick(config);
-                }
-            });
-            console.log('OICPP SampleTester: initializeUI - Codeforces 按钮 (悬浮) 已插入。');
+        const toggleBtn = createToggleButtonUI(); // This function already appends to body and sets fixed position
+        // Load position from localStorage
+        const savedRight = localStorage.getItem(LOCAL_STORAGE_POS_X);
+        const savedTop = localStorage.getItem(LOCAL_STORAGE_POS_Y);
+        if (savedRight !== null && savedTop !== null) {
+            toggleBtn.style.right = `${parseFloat(savedRight)}px`;
+            toggleBtn.style.top = `${parseFloat(savedTop)}px`;
+            console.log(`OICPP SampleTester: 已加载按钮位置 (Codeforces 悬浮): right=${savedRight}, top=${savedTop}`);
+        } else {
+            toggleBtn.style.right = '10px';
+            toggleBtn.style.top = '10px';
+            console.log('OICPP SampleTester: 已设置默认按钮位置 (悬浮)。');
         }
+        const toggleBtnDraggable = makeDraggable(toggleBtn, toggleBtn);
+        toggleBtn.addEventListener('click', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault(); // Prevent default click action
+                createStateSelectionPanel(toggleBtn, config, setupHtojButton, setupLuoguButton, setupAtcoderButton, setupCodeforcesButton);
+            } else if (toggleBtnDraggable.getIsMoved()) {
+                e.preventDefault();
+                console.log('OICPP SampleTester: initializeUI - 切换按钮被拖动，阻止点击事件 (Codeforces)。');
+            }
+            else {
+                handleToggleButtonClick(config);
+            }
+        });
+        console.log('OICPP SampleTester: initializeUI - Codeforces 按钮 (悬浮) 已插入。');
     };
 
     // 根据 hostname 调用相应的 setup 函数
     if (hostname === 'htoj.com.cn') {
-        let currentHtojButtonState = localStorage.getItem(config.buttonStateKey);
-        let htojButtonState: 'fixed' | 'floating' = 'fixed';
-        if (currentHtojButtonState === 'fixed' || currentHtojButtonState === 'floating') {
-            htojButtonState = currentHtojButtonState;
-        }
-        setupHtojButton(htojButtonState);
+        setupHtojButton();
     } else if (hostname === 'www.luogu.com.cn' || hostname === 'luogu.com.cn') {
-        let currentLuoguButtonState = localStorage.getItem(config.buttonStateKey);
-        let luoguButtonState: 'fixed' | 'floating' = 'fixed';
-        if (currentLuoguButtonState === 'fixed' || currentLuoguButtonState === 'floating') {
-            luoguButtonState = currentLuoguButtonState;
-        }
-        setupLuoguButton(luoguButtonState);
+        setupLuoguButton();
     } else if (hostname === 'atcoder.jp') {
-        let currentAtcoderButtonState = localStorage.getItem(config.buttonStateKey);
-        let atcoderButtonState: 'fixed' | 'floating' = 'fixed';
-        if (currentAtcoderButtonState === 'fixed' || currentAtcoderButtonState === 'floating') {
-            atcoderButtonState = currentAtcoderButtonState;
-        }
-        setupAtcoderButton(atcoderButtonState);
+        setupAtcoderButton();
     } else if (hostname === 'codeforces.com') {
-        let currentCodeforcesButtonState = localStorage.getItem(config.buttonStateKey);
-        let codeforcesButtonState: 'fixed' | 'floating' = 'fixed';
-        if (currentCodeforcesButtonState === 'fixed' || currentCodeforcesButtonState === 'floating') {
-            codeforcesButtonState = currentCodeforcesButtonState;
-        }
-        setupCodeforcesButton(codeforcesButtonState);
+        setupCodeforcesButton();
     } else {
         // Default behavior for other domains
         let currentToggleBtn = document.getElementById(TOGGLE_BTN_ID);
