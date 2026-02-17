@@ -8,7 +8,8 @@ export const COOLDOWN_DURATION_MS = 3000; // 5秒冷却时间
 // 指引常量
 export const GUIDE_POPOVER_ID = 'fetchProblemGuidePopover';
 export const GUIDE_OVERLAY_ID = 'fetchProblemGuideOverlay';
-export const GUIDE_STORAGE_KEY = 'fetchProblemGuideShown';
+export const GUIDE_MAIN_PAGE_STORAGE_KEY = 'fetchProblemGuideShown';
+export const GUIDE_SETTINGS_PAGE_STORAGE_KEY = 'fetchProblemSettingsGuideShown';
 export const LOCAL_STORAGE_POS_X = 'fetchProblemToggleBtnPosX';
 export const LOCAL_STORAGE_POS_Y = 'fetchProblemToggleBtnPosY';
 export const STATE_SELECTION_PANEL_ID = 'htojStateSelectionPanel';
