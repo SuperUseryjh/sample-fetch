@@ -128,17 +128,14 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
     'htoj.com.cn': {
         ojName: 'Hetao',
         codeSelectors: ['div.md-editor-code pre code span.md-editor-code-block'],
-        problemNameSelector: 'h3.text-xl.font-bold.text-colorText',
+        problemNameSelector: 'h1.text-xl.font-bold.text-colorText',
         specialProblemNameExtraction: (element) => {
             const titleSpans = element.querySelectorAll('span');
-            if (titleSpans.length >= 2) {
-                const pid = titleSpans[0].textContent!.trim();
-                const title = titleSpans[1].textContent!.trim();
-                return `${pid} ${title}`.trim();
-            } else if (titleSpans.length === 1) {
-                return titleSpans[0].textContent!.trim();
-            }
-            return '';
+            let problemName = '';
+            titleSpans.forEach(span => {
+                problemName += span.textContent!.trim() + ' ';
+            });
+            return problemName.trim();
         },
         extract: () => {
             const rawSnippets: string[] = [];
