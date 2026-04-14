@@ -7,7 +7,6 @@ import { domainConfigs } from './domainConfig';
  */
 export function extractCodeSnippets(): Sample[] {
     console.log('OICPP SampleTester: extractCodeSnippets - 开始提取代码片段。');
-    const rawSnippets: string[] = [];
     const hostname = window.location.hostname;
     const config = domainConfigs[hostname];
 

@@ -436,5 +436,145 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
             return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'SYZOJButtonState'
+    },
+    'vjudge.net': {
+        ojName: 'VJudge',
+        codeSelectors: ['table.vjudge_sample tbody tr td pre'],
+        problemNameSelector: '#prob-title',
+        extract: () => {
+            const samples: { id: number; input: string; output: string; timeLimit: number; memoryLimit: number }[] = [];
+            
+            // 尝试从 iframe 中获取样例
+            const iframe = document.querySelector('iframe[src*="problem"]') as HTMLIFrameElement;
+            let iframeDoc: Document | null = null;
+            
+            if (iframe && iframe.contentDocument) {
+                iframeDoc = iframe.contentDocument;
+                console.log('OICPP SampleTester: VJudge - 从 iframe 中提取样例');
+            }
+            
+            const doc = iframeDoc || document;
+            const rows = doc.querySelectorAll('table.vjudge_sample tbody tr');
+            
+            let sampleId = 1;
+            rows.forEach(row => {
+                const tds = row.querySelectorAll('td pre');
+                if (tds.length >= 2) {
+                    const inputContent = tds[0].textContent!.trim();
+                    const outputContent = tds[1].textContent!.trim();
+                    samples.push({
+                        id: sampleId++,
+                        input: inputContent,
+                        output: outputContent,
+                        timeLimit: 1000,
+                        memoryLimit: 512
+                    });
+                }
+            });
+
+            let timeLimit = 1000;
+            let memoryLimit = 512;
+
+            const timeLimitElement = doc.querySelector('div[id^="time-limit-"]');
+            if (timeLimitElement) {
+                const text = timeLimitElement.textContent!;
+                const match = text.match(/(\d+\.?\d*)\s*(ms|s)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 's') {
+                        timeLimit = num * 1000;
+                    } else {
+                        timeLimit = num;
+                    }
+                }
+            }
+
+            const memoryLimitElement = doc.querySelector('div[id^="memory-limit-"]');
+            if (memoryLimitElement) {
+                const text = memoryLimitElement.textContent!;
+                const match = text.match(/(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 'gb') {
+                        memoryLimit = num * 1024;
+                    } else {
+                        memoryLimit = num;
+                    }
+                }
+            }
+
+            return { samples, timeLimit, memoryLimit };
+        },
+        buttonStateKey: 'vjudgeButtonState'
+    },
+    'www.vjudge.net': {
+        ojName: 'VJudge',
+        codeSelectors: ['table.vjudge_sample tbody tr td pre'],
+        problemNameSelector: '#prob-title',
+        extract: () => {
+            const samples: { id: number; input: string; output: string; timeLimit: number; memoryLimit: number }[] = [];
+            
+            // 尝试从 iframe 中获取样例
+            const iframe = document.querySelector('iframe[src*="problem"]') as HTMLIFrameElement;
+            let iframeDoc: Document | null = null;
+            
+            if (iframe && iframe.contentDocument) {
+                iframeDoc = iframe.contentDocument;
+                console.log('OICPP SampleTester: VJudge - 从 iframe 中提取样例');
+            }
+            
+            const doc = iframeDoc || document;
+            const rows = doc.querySelectorAll('table.vjudge_sample tbody tr');
+            
+            let sampleId = 1;
+            rows.forEach(row => {
+                const tds = row.querySelectorAll('td pre');
+                if (tds.length >= 2) {
+                    const inputContent = tds[0].textContent!.trim();
+                    const outputContent = tds[1].textContent!.trim();
+                    samples.push({
+                        id: sampleId++,
+                        input: inputContent,
+                        output: outputContent,
+                        timeLimit: 1000,
+                        memoryLimit: 512
+                    });
+                }
+            });
+
+            let timeLimit = 1000;
+            let memoryLimit = 512;
+
+            const timeLimitElement = doc.querySelector('div[id^="time-limit-"]');
+            if (timeLimitElement) {
+                const text = timeLimitElement.textContent!;
+                const match = text.match(/(\d+\.?\d*)\s*(ms|s)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 's') {
+                        timeLimit = num * 1000;
+                    } else {
+                        timeLimit = num;
+                    }
+                }
+            }
+
+            const memoryLimitElement = doc.querySelector('div[id^="memory-limit-"]');
+            if (memoryLimitElement) {
+                const text = memoryLimitElement.textContent!;
+                const match = text.match(/(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 'gb') {
+                        memoryLimit = num * 1024;
+                    } else {
+                        memoryLimit = num;
+                    }
+                }
+            }
+
+            return { samples, timeLimit, memoryLimit };
+        },
+        buttonStateKey: 'vjudgeButtonState'
     }
 };
