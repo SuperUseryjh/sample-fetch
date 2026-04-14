@@ -440,7 +440,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
     'vjudge.net': {
         ojName: 'VJudge',
         codeSelectors: ['table.vjudge_sample tbody tr td pre'],
-        problemNameSelector: '#prob-title',
+        problemNameSelector: '#problem-title',
         extract: () => {
             const samples: { id: number; input: string; output: string; timeLimit: number; memoryLimit: number }[] = [];
             
@@ -510,7 +510,7 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
     'www.vjudge.net': {
         ojName: 'VJudge',
         codeSelectors: ['table.vjudge_sample tbody tr td pre'],
-        problemNameSelector: '#prob-title',
+        problemNameSelector: '#problem-title',
         extract: () => {
             const samples: { id: number; input: string; output: string; timeLimit: number; memoryLimit: number }[] = [];
             
