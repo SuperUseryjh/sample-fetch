@@ -576,5 +576,125 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
             return { samples, timeLimit, memoryLimit };
         },
         buttonStateKey: 'vjudgeButtonState'
+    },
+    'marsoj.cn': {
+        ojName: 'MarsOJ',
+        codeSelectors: ['pre.syntax-hl'],
+        problemNameSelector: 'h1.section__title',
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
+                const code = sampleDiv.querySelector('pre.syntax-hl');
+                if (code) {
+                    rawSnippets.push(code.textContent!.trim());
+                }
+            });
+
+            let timeLimit = 1000;
+            let memoryLimit = 256;
+
+            const timeLimitElement = document.querySelector('span.problem__tag-item.bp3-icon-stopwatch');
+            if (timeLimitElement) {
+                const text = timeLimitElement.textContent!.trim();
+                const match = text.match(/(\d+\.?\d*)\s*(ms|s)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 's') {
+                        timeLimit = num * 1000;
+                    } else {
+                        timeLimit = num;
+                    }
+                }
+            }
+
+            const memoryLimitElement = document.querySelector('span.problem__tag-item.bp3-icon-comparison');
+            if (memoryLimitElement) {
+                const text = memoryLimitElement.textContent!.trim();
+                const match = text.match(/(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 'gb') {
+                        memoryLimit = num * 1024;
+                    } else {
+                        memoryLimit = num;
+                    }
+                }
+            }
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
+        },
+        buttonStateKey: 'marsojButtonState'
+    },
+    'www.marsoj.cn': {
+        ojName: 'MarsOJ',
+        codeSelectors: ['pre.syntax-hl'],
+        problemNameSelector: 'h1.section__title',
+        extract: () => {
+            const rawSnippets: string[] = [];
+            document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
+                const code = sampleDiv.querySelector('pre.syntax-hl');
+                if (code) {
+                    rawSnippets.push(code.textContent!.trim());
+                }
+            });
+
+            let timeLimit = 1000;
+            let memoryLimit = 256;
+
+            const timeLimitElement = document.querySelector('span.problem__tag-item.bp3-icon-stopwatch');
+            if (timeLimitElement) {
+                const text = timeLimitElement.textContent!.trim();
+                const match = text.match(/(\d+\.?\d*)\s*(ms|s)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 's') {
+                        timeLimit = num * 1000;
+                    } else {
+                        timeLimit = num;
+                    }
+                }
+            }
+
+            const memoryLimitElement = document.querySelector('span.problem__tag-item.bp3-icon-comparison');
+            if (memoryLimitElement) {
+                const text = memoryLimitElement.textContent!.trim();
+                const match = text.match(/(\d+\.?\d*)\s*(mib|mb|gb)/i);
+                if (match) {
+                    const num = parseFloat(match[1]);
+                    if (match[2].toLowerCase() === 'gb') {
+                        memoryLimit = num * 1024;
+                    } else {
+                        memoryLimit = num;
+                    }
+                }
+            }
+
+            const samples = [];
+            for (let i = 0; i < rawSnippets.length; i += 2) {
+                const inputContent = rawSnippets[i];
+                const outputContent = rawSnippets[i + 1] || "";
+                samples.push({
+                    id: (i / 2) + 1,
+                    input: inputContent,
+                    output: outputContent,
+                    timeLimit: timeLimit,
+                    memoryLimit: memoryLimit
+                });
+            }
+            return { samples, timeLimit, memoryLimit };
+        },
+        buttonStateKey: 'marsojButtonState'
     }
 };
