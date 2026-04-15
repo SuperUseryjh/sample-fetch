@@ -583,11 +583,8 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         problemNameSelector: 'h1.section__title',
         extract: () => {
             const rawSnippets: string[] = [];
-            document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
-                const code = sampleDiv.querySelector('pre.syntax-hl');
-                if (code) {
-                    rawSnippets.push(code.textContent!.trim());
-                }
+            document.querySelectorAll('div.code-toolbar.medium-6.columns.sample pre.syntax-hl').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
             });
 
             let timeLimit = 1000;
@@ -643,11 +640,8 @@ export const domainConfigs: { [key: string]: DomainConfig } = {
         problemNameSelector: 'h1.section__title',
         extract: () => {
             const rawSnippets: string[] = [];
-            document.querySelectorAll('div.row > div.code-toolbar.medium-6.columns.sample').forEach(sampleDiv => {
-                const code = sampleDiv.querySelector('pre.syntax-hl');
-                if (code) {
-                    rawSnippets.push(code.textContent!.trim());
-                }
+            document.querySelectorAll('div.code-toolbar.medium-6.columns.sample pre.syntax-hl').forEach(element => {
+                rawSnippets.push(element.textContent!.trim());
             });
 
             let timeLimit = 1000;
